@@ -1,12 +1,12 @@
 package com.sba301.backend.controller;
 
+import com.sba301.backend.dto.request.BranchFilterDTO;
 import com.sba301.backend.entity.Branch;
 import com.sba301.backend.service.BranchService;
-import com.sba301.backend.util.ResponseUtil; // 1. Import ResponseUtil
+import com.sba301.backend.util.ResponseUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -22,20 +22,20 @@ public class BranchController {
         this.branchService = branchService;
     }
 
+    // Lấy danh sách mặc định (tương đương với truyền biến rỗng)
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllBranches() {
         List<Branch> data = branchService.getAllActiveBranches();
-
         return ResponseUtil.buildResponse("Lấy danh sách cơ sở thành công", data);
     }
 
+    // Gộp tất cả các chức năng tìm kiếm và lọc vào đây
     @GetMapping("/search")
-    public ResponseEntity<Map<String, Object>> searchBranches(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String address) {
-
-        List<Branch> data = branchService.searchBranches(name, address);
-
-        return ResponseUtil.buildResponse("Lọc danh sách cơ sở thành công", data);
+    public ResponseEntity<Map<String, Object>> searchBranches(BranchFilterDTO filterDto) {
+        List<Branch> data = branchService.searchAndFilterBranches(filterDto);
+        if (data.isEmpty()) {
+            return ResponseUtil.buildResponse("Không tìm thấy cơ sở nào phù hợp", data);
+        }
+        return ResponseUtil.buildResponse("Tìm kiếm và lọc cơ sở thành công", data);
     }
 }

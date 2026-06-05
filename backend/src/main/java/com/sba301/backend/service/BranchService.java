@@ -1,7 +1,10 @@
 package com.sba301.backend.service;
 
+import com.sba301.backend.dto.request.BranchFilterDTO;
 import com.sba301.backend.entity.Branch;
 import com.sba301.backend.repository.BranchRepository;
+import com.sba301.backend.repository.specification.BranchSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,21 +14,19 @@ public class BranchService {
 
     private final BranchRepository branchRepository;
 
-    // Constructor Injection
     public BranchService(BranchRepository branchRepository) {
         this.branchRepository = branchRepository;
     }
 
+    // Hàm lấy tất cả (Tái sử dụng luôn Specification bằng cách truyền DTO rỗng)
     public List<Branch> getAllActiveBranches() {
-        // Trả về danh sách các cơ sở đang có trạng thái ACTIVE
-        return branchRepository.findByStatusOrderByCreatedAtDesc("ACTIVE");
+        BranchFilterDTO emptyFilter = new BranchFilterDTO();
+        return searchAndFilterBranches(emptyFilter);
     }
 
-    public List<Branch> searchBranches(String name, String address) {
-        // Nếu frontend truyền chuỗi rỗng hoặc có khoảng trắng, trim() lại cho sạch
-        String searchName = (name != null) ? name.trim() : null;
-        String searchAddress = (address != null) ? address.trim() : null;
-
-        return branchRepository.searchBranches(searchName, searchAddress);
+    // Hàm Search + Filter All-in-one
+    public List<Branch> searchAndFilterBranches(BranchFilterDTO filterDto) {
+        Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto);
+        return branchRepository.findAll(spec);
     }
 }
