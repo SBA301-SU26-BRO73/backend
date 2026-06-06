@@ -22,14 +22,12 @@ public class BranchController {
         this.branchService = branchService;
     }
 
-    // Lấy danh sách mặc định (tương đương với truyền biến rỗng)
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllBranches() {
         List<Branch> data = branchService.getAllActiveBranches();
         return ResponseUtil.buildResponse("Lấy danh sách cơ sở thành công", data);
     }
 
-    // Gộp tất cả các chức năng tìm kiếm và lọc vào đây
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchBranches(BranchFilterDTO filterDto) {
         List<Branch> data = branchService.searchAndFilterBranches(filterDto);

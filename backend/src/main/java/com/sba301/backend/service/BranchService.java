@@ -18,13 +18,11 @@ public class BranchService {
         this.branchRepository = branchRepository;
     }
 
-    // Hàm lấy tất cả (Tái sử dụng luôn Specification bằng cách truyền DTO rỗng)
     public List<Branch> getAllActiveBranches() {
         BranchFilterDTO emptyFilter = new BranchFilterDTO();
         return searchAndFilterBranches(emptyFilter);
     }
 
-    // Hàm Search + Filter All-in-one
     public List<Branch> searchAndFilterBranches(BranchFilterDTO filterDto) {
         Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto);
         return branchRepository.findAll(spec);
