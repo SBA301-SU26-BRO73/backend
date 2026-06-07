@@ -1,6 +1,6 @@
 package com.sba301.backend.entity;
 
-import com.sba301.backend.entity.enums.CourtStatus;
+import com.sba301.backend.common.enums.CourtStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
