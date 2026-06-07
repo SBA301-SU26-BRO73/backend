@@ -1,30 +1,19 @@
 package com.sba301.backend.service;
 
 import com.sba301.backend.dto.request.BranchFilterDTO;
-import com.sba301.backend.entity.Branch;
-import com.sba301.backend.repository.BranchRepository;
-import com.sba301.backend.repository.specification.BranchSpecification;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import com.sba301.backend.dto.response.BranchResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
-@Service
-public class BranchService {
+public interface BranchService {
 
-    private final BranchRepository branchRepository;
+    BranchResponse getBranchById(Long id);
 
-    public BranchService(BranchRepository branchRepository) {
-        this.branchRepository = branchRepository;
-    }
+    List<BranchResponse> getAllActiveBranches();
 
-    public List<Branch> getAllActiveBranches() {
-        BranchFilterDTO emptyFilter = new BranchFilterDTO();
-        return searchAndFilterBranches(emptyFilter);
-    }
+    Page<BranchResponse> getAllActiveBranchesPaginated(Pageable pageable);
 
-    public List<Branch> searchAndFilterBranches(BranchFilterDTO filterDto) {
-        Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto);
-        return branchRepository.findAll(spec);
-    }
+    Page<BranchResponse> searchBranchesWithPagination(BranchFilterDTO filterDto, Pageable pageable);
 }

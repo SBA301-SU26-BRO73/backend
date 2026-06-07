@@ -1,16 +1,15 @@
 package com.sba301.backend.controller;
 
 import com.sba301.backend.dto.request.BranchFilterDTO;
-import com.sba301.backend.entity.Branch;
+import com.sba301.backend.dto.response.ApiResponse;
+import com.sba301.backend.dto.response.BranchResponse;
 import com.sba301.backend.service.BranchService;
-import com.sba301.backend.util.ResponseUtil;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/branches")
@@ -22,18 +21,42 @@ public class BranchController {
         this.branchService = branchService;
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<BranchResponse> getBranchById(@PathVariable Long id) {
+        BranchResponse data = branchService.getBranchById(id);
+        return ApiResponse.success(data, "Lấy thông tin chi tiết cơ sở thành công");
+    }
+
+    @GetMapping("/all")
+    public ApiResponse<List<BranchResponse>> getAllBranches() {
+        List<BranchResponse> data = branchService.getAllActiveBranches();
+        return ApiResponse.success(data, "Lấy toàn bộ danh sách cơ sở thành công");
+    }
+
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllBranches() {
-        List<Branch> data = branchService.getAllActiveBranches();
-        return ResponseUtil.buildResponse("Lấy danh sách cơ sở thành công", data);
+    public ApiResponse<Page<BranchResponse>> getAllBranchesPaginated(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<BranchResponse> pageData = branchService.getAllActiveBranchesPaginated(pageable);
+
+        return ApiResponse.success(pageData, "Lấy danh sách cơ sở phân trang thành công");
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Map<String, Object>> searchBranches(BranchFilterDTO filterDto) {
-        List<Branch> data = branchService.searchAndFilterBranches(filterDto);
-        if (data.isEmpty()) {
-            return ResponseUtil.buildResponse("Không tìm thấy cơ sở nào phù hợp", data);
+    public ApiResponse<Page<BranchResponse>> searchBranchesPaginated(
+            BranchFilterDTO filterDto,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<BranchResponse> pageData = branchService.searchBranchesWithPagination(filterDto, pageable);
+
+        if (pageData.isEmpty()) {
+            return ApiResponse.success(pageData, "Không tìm thấy cơ sở nào phù hợp");
         }
-        return ResponseUtil.buildResponse("Tìm kiếm và lọc cơ sở thành công", data);
+
+        return ApiResponse.success(pageData, "Tìm kiếm và lọc cơ sở thành công");
     }
 }
