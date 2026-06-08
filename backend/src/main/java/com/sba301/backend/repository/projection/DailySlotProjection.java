@@ -1,9 +1,9 @@
-package com.sba301.backend.dto;
+package com.sba301.backend.repository.projection;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
 
-public interface DailySlotDto {
+public interface DailySlotProjection {
     LocalTime getStartTime();
     LocalTime getEndTime();
     BigDecimal getPrice();

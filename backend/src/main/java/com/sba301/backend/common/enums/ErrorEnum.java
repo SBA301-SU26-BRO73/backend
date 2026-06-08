@@ -9,7 +9,6 @@ public enum ErrorEnum {
     INVALID_INPUT_COMMON(400, "invalid_input", "%s"),
     INTERNAL_SERVER_ERROR(500, "internal_server_error", "An error occurred. Please try again later."),
 
-    // THÊM MỚI MÃ LỖI 404
     RESOURCE_NOT_FOUND(404, "resource_not_found", "Resource request not found");
 
     private final int httpStatus;

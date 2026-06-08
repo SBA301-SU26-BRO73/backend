@@ -1,6 +1,6 @@
 package com.sba301.backend.repository;
 
-import com.sba301.backend.dto.DailySlotDto;
+import com.sba301.backend.repository.projection.DailySlotProjection;
 import com.sba301.backend.entity.TimeSlotTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -53,5 +53,5 @@ public interface TimeSlotTemplateRepository extends JpaRepository<TimeSlotTempla
           
         ORDER BY t.start_time
     """, nativeQuery = true)
-    List<DailySlotDto> getDailyCourtSchedule(@Param("courtId") Long courtId, @Param("date") LocalDate date);
+    List<DailySlotProjection> getDailyCourtSchedule(@Param("courtId") Long courtId, @Param("date") LocalDate date);
 }

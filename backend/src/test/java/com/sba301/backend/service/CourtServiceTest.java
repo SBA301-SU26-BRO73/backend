@@ -2,7 +2,7 @@ package com.sba301.backend.service;
 
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.config.exception.AppException;
-import com.sba301.backend.dto.DailySlotDto;
+import com.sba301.backend.repository.projection.DailySlotProjection;
 import com.sba301.backend.dto.response.DailySlotResponse;
 import com.sba301.backend.repository.CourtRepository;
 import com.sba301.backend.repository.TimeSlotTemplateRepository;
@@ -38,12 +38,12 @@ class CourtServiceImplTest {
     @InjectMocks // Tự động bơm 2 Repository phía trên vào Service
     private CourtServiceImpl courtService;
 
-    private DailySlotDto mockDbSlot;
+    private DailySlotProjection mockDbSlot;
 
     @BeforeEach
     void setUp() {
         // Tạo dữ liệu giả lập cho Interface Projection
-        mockDbSlot = Mockito.mock(DailySlotDto.class);
+        mockDbSlot = Mockito.mock(DailySlotProjection.class);
         lenient().when(mockDbSlot.getStartTime()).thenReturn(LocalTime.of(8, 0));
         lenient().when(mockDbSlot.getEndTime()).thenReturn(LocalTime.of(8, 30));
         lenient().when(mockDbSlot.getPrice()).thenReturn(new BigDecimal("50000.00"));

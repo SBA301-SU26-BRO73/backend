@@ -2,7 +2,7 @@ package com.sba301.backend.service.impl;
 
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.config.exception.AppException;
-import com.sba301.backend.dto.DailySlotDto;
+import com.sba301.backend.repository.projection.DailySlotProjection;
 import com.sba301.backend.dto.response.DailySlotResponse;
 import com.sba301.backend.repository.CourtRepository;
 import com.sba301.backend.repository.TimeSlotTemplateRepository;
@@ -30,7 +30,7 @@ public class CourtServiceImpl implements CourtService {
             throw new AppException(ErrorEnum.RESOURCE_NOT_FOUND, "Không tìm thấy sân với ID: " + courtId);
         }
 
-        List<DailySlotDto> dbSlots = timeSlotTemplateRepository.getDailyCourtSchedule(courtId, date);
+        List<DailySlotProjection> dbSlots = timeSlotTemplateRepository.getDailyCourtSchedule(courtId, date);
 
         // Chuyển đổi sang Response DTO (Null-safe)
         return dbSlots.stream()
@@ -38,7 +38,7 @@ public class CourtServiceImpl implements CourtService {
                 .collect(Collectors.toList());
     }
 
-    private DailySlotResponse mapToResponse(DailySlotDto dto) {
+    private DailySlotResponse mapToResponse(DailySlotProjection dto) {
         if (dto == null) return null;
 
         return DailySlotResponse.builder()
