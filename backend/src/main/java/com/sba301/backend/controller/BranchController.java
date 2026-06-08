@@ -1,6 +1,6 @@
 package com.sba301.backend.controller;
 
-import com.sba301.backend.dto.request.BranchFilterDTO;
+import com.sba301.backend.dto.request.BranchFilterRequest;
 import com.sba301.backend.dto.response.ApiResponse;
 import com.sba301.backend.dto.response.BranchResponse;
 import com.sba301.backend.service.BranchService;
@@ -27,12 +27,6 @@ public class BranchController {
         return ApiResponse.success(data, "Lấy thông tin chi tiết cơ sở thành công");
     }
 
-    @GetMapping("/all")
-    public ApiResponse<List<BranchResponse>> getAllBranches() {
-        List<BranchResponse> data = branchService.getAllActiveBranches();
-        return ApiResponse.success(data, "Lấy toàn bộ danh sách cơ sở thành công");
-    }
-
     @GetMapping
     public ApiResponse<Page<BranchResponse>> getAllBranchesPaginated(
             @RequestParam(defaultValue = "1") int page,
@@ -46,16 +40,16 @@ public class BranchController {
 
     @GetMapping("/search")
     public ApiResponse<Page<BranchResponse>> searchBranchesPaginated(
-            BranchFilterDTO filterDto,
+            BranchFilterRequest filterDto,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<BranchResponse> pageData = branchService.searchBranchesWithPagination(filterDto, pageable);
 
-        if (pageData.isEmpty()) {
-            return ApiResponse.success(pageData, "Không tìm thấy cơ sở nào phù hợp");
-        }
+//        if (pageData.isEmpty()) {
+//            return ApiResponse.success(pageData, "Không tìm thấy cơ sở nào phù hợp");
+//        }
 
         return ApiResponse.success(pageData, "Tìm kiếm và lọc cơ sở thành công");
     }

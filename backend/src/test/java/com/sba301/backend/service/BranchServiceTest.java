@@ -2,7 +2,7 @@ package com.sba301.backend.service;
 
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.config.exception.AppException;
-import com.sba301.backend.dto.request.BranchFilterDTO;
+import com.sba301.backend.dto.request.BranchFilterRequest;
 import com.sba301.backend.dto.response.BranchResponse;
 import com.sba301.backend.entity.Branch;
 import com.sba301.backend.repository.BranchRepository;
@@ -123,7 +123,7 @@ public class BranchServiceTest {
     // ==========================================
     @Test
     void testSearchBranchesWithPagination_ShouldReturnPage() {
-        BranchFilterDTO filterDto = new BranchFilterDTO();
+        BranchFilterRequest filterDto = new BranchFilterRequest();
         filterDto.setName("Cơ sở");
 
         Pageable pageable = PageRequest.of(0, 5);

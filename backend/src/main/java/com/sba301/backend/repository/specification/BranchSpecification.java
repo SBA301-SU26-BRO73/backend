@@ -1,6 +1,6 @@
 package com.sba301.backend.repository.specification;
 
-import com.sba301.backend.dto.request.BranchFilterDTO;
+import com.sba301.backend.dto.request.BranchFilterRequest;
 import com.sba301.backend.entity.Branch;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -10,7 +10,7 @@ import java.util.List;
 
 public class BranchSpecification {
 
-    public static Specification<Branch> filterByCriteria(BranchFilterDTO filter) {
+    public static Specification<Branch> filterByCriteria(BranchFilterRequest filter) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 

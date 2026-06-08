@@ -3,7 +3,7 @@ package com.sba301.backend.dto.request;
 import lombok.Data;
 
 @Data
-public class BranchFilterDTO {
+public class BranchFilterRequest {
     private String name;
     private String address;
     private String ward;
