@@ -7,7 +7,15 @@ public enum ErrorEnum {
         ACCESS_DENIED(403, "access_denied", "You do not have permission to access this resource"),
         INVALID_INPUT(400, "invalid_input", "Invalid input data"),
         INVALID_INPUT_COMMON(400, "invalid_input", "%s"),
-        INTERNAL_SERVER_ERROR(500, "internal_server_error", "An error occurred. Please try again later.");
+        INTERNAL_SERVER_ERROR(500, "internal_server_error", "An error occurred. Please try again later."),
+
+        UNAUTHORIZED(401, "unauthorized", "Authentication required"),
+        INVALID_CREDENTIALS(401, "invalid_credentials", "Invalid email or password"),
+        INVALID_TOKEN(401, "invalid_token", "Token is invalid or expired"),
+        EMAIL_ALREADY_EXISTS(409, "email_already_exists", "Email is already registered"),
+        USER_NOT_FOUND(404, "user_not_found", "User not found"),
+        RESOURCE_NOT_FOUND(404, "resource_not_found", "Resource with id %s not found"),
+        ACCOUNT_INACTIVE(403, "account_inactive", "Account is not active");
         
         private final int httpStatus;
         private final String code;
