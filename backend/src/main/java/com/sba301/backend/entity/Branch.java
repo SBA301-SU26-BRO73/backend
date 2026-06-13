@@ -66,9 +66,6 @@ public class Branch {
     @Column(nullable = false, length = 20)
     private BranchStatus status = BranchStatus.ACTIVE;
 
-    @OneToMany(mappedBy = "branch")
-    private List<Court> courts;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
