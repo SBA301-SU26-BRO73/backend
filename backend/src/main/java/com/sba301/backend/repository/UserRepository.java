@@ -9,4 +9,6 @@ import com.sba301.backend.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByIdAndDeletedAtIsNull(Long id);
+
+    boolean existsByEmailAndDeletedAtIsNull(String email);
 }
