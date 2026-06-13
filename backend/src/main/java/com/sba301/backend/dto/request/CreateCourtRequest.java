@@ -1,6 +1,6 @@
 package com.sba301.backend.dto.request;
 
-import com.sba301.backend.entity.CourtStatus;
+import com.sba301.backend.common.enums.CourtStatus;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

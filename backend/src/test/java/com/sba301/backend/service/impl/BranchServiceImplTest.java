@@ -22,13 +22,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.sba301.backend.common.enums.BranchStatus;
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.CreateBranchRequest;
 import com.sba301.backend.dto.request.UpdateBranchRequest;
 import com.sba301.backend.dto.response.BranchResponse;
 import com.sba301.backend.entity.Branch;
-import com.sba301.backend.entity.BranchStatus;
 import com.sba301.backend.entity.User;
 import com.sba301.backend.mapper.BranchMapper;
 import com.sba301.backend.repository.BranchRepository;

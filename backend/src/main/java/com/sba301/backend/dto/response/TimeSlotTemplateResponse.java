@@ -1,8 +1,8 @@
 package com.sba301.backend.dto.response;
 
+import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
-
-import com.sba301.backend.common.enums.CourtStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,17 +15,16 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourtResponse {
+public class TimeSlotTemplateResponse {
 
     private Long id;
-    private Long branchId;
-    private String branchName;
-    private String name;
-    private Long courtTypeId;
-    private String courtTypeName;
-    private String description;
-    private String imageUrl;
-    private CourtStatus status;
+    private Long courtId;
+    private String courtName;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private BigDecimal price;
+    private Short dayOfWeek;
+    private Boolean active;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

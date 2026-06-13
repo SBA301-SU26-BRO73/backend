@@ -7,13 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sba301.backend.common.enums.BranchStatus;
+import com.sba301.backend.common.enums.CourtStatus;
 import com.sba301.backend.dto.request.CreateCourtRequest;
 import com.sba301.backend.dto.request.UpdateCourtRequest;
 import com.sba301.backend.dto.response.CourtResponse;
 import com.sba301.backend.entity.Branch;
-import com.sba301.backend.entity.BranchStatus;
 import com.sba301.backend.entity.Court;
-import com.sba301.backend.entity.CourtStatus;
 import com.sba301.backend.entity.CourtType;
 import com.sba301.backend.exception.BadRequestException;
 import com.sba301.backend.exception.ResourceNotFoundException;

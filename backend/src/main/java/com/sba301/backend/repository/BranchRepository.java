@@ -6,8 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.sba301.backend.common.enums.BranchStatus;
 import com.sba301.backend.entity.Branch;
-import com.sba301.backend.entity.BranchStatus;
 
 public interface BranchRepository extends JpaRepository<Branch, Long> {
 
