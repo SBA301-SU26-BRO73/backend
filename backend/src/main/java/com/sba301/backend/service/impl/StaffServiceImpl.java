@@ -1,6 +1,12 @@
 package com.sba301.backend.service.impl;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sba301.backend.common.enums.BookingStatus;
 import com.sba301.backend.common.enums.BranchStatus;
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.common.enums.UserRole;
@@ -15,11 +22,20 @@ import com.sba301.backend.common.enums.UserStatus;
 import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.CreateStaffRequest;
 import com.sba301.backend.dto.request.UpdateStaffRequest;
+import com.sba301.backend.dto.response.StaffCheckinResponse;
 import com.sba301.backend.dto.response.StaffResponse;
+import com.sba301.backend.dto.response.StaffScheduleResponse;
+import com.sba301.backend.entity.Booking;
+import com.sba301.backend.entity.BookingSlot;
 import com.sba301.backend.entity.Branch;
 import com.sba301.backend.entity.Staff;
 import com.sba301.backend.entity.User;
+import com.sba301.backend.exception.BadRequestException;
+import com.sba301.backend.exception.ResourceNotFoundException;
 import com.sba301.backend.mapper.StaffMapper;
+import com.sba301.backend.mapper.StaffScheduleMapper;
+import com.sba301.backend.repository.BookingRepository;
+import com.sba301.backend.repository.BookingSlotRepository;
 import com.sba301.backend.repository.BranchRepository;
 import com.sba301.backend.repository.StaffRepository;
 import com.sba301.backend.repository.UserRepository;
@@ -37,6 +53,9 @@ public class StaffServiceImpl implements StaffService {
     private final BranchRepository branchRepository;
     private final StaffMapper staffMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final BookingRepository bookingRepository;
+    private final BookingSlotRepository bookingSlotRepository;
+    private final StaffScheduleMapper staffScheduleMapper;
 
     @Override
     @Transactional
@@ -98,6 +117,83 @@ public class StaffServiceImpl implements StaffService {
         staff.getUser().setStatus(UserStatus.INACTIVE);
         userRepository.save(staff.getUser());
         staffRepository.save(staff);
+    }
+
+    @Override
+    public List<StaffScheduleResponse> getTodaySchedule(Long staffUserId, LocalDate date) {
+        Staff staff = resolveStaff(staffUserId);
+        LocalDate target = date != null ? date : LocalDate.now(ZoneOffset.UTC);
+
+        List<Booking> bookings =
+                bookingRepository.findScheduleByBranchAndDate(staff.getBranch().getId(), target);
+        if (bookings.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, List<BookingSlot>> slotsByBooking = loadSlots(bookings);
+
+        return bookings.stream()
+                .map(booking -> staffScheduleMapper.toScheduleResponse(
+                        booking, slotsByBooking.getOrDefault(booking.getId(), List.of())))
+                .sorted(Comparator
+                        .comparing(StaffScheduleResponse::getStartTime,
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(StaffScheduleResponse::getCourtName,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public StaffCheckinResponse checkIn(Long staffUserId, String checkinCode) {
+        Staff staff = resolveStaff(staffUserId);
+
+        Booking booking = bookingRepository.findByCheckinCode(checkinCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid check-in code"));
+
+        if (!booking.getCourt().getBranch().getId().equals(staff.getBranch().getId())) {
+            throw new BadRequestException("Booking belongs to another branch");
+        }
+
+        if (!booking.getDate().equals(LocalDate.now(ZoneOffset.UTC))) {
+            throw new BadRequestException("Booking is not scheduled for today");
+        }
+
+        validateCheckable(booking.getStatus());
+
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        booking.setCheckedInAt(OffsetDateTime.now());
+        Booking saved = bookingRepository.save(booking);
+
+        List<BookingSlot> slots =
+                bookingSlotRepository.findByBooking_IdInOrderByBooking_IdAscSlotStartAsc(
+                        List.of(saved.getId()));
+
+        return staffScheduleMapper.toCheckinResponse(saved, slots);
+    }
+
+    private void validateCheckable(BookingStatus status) {
+        switch (status) {
+            case CONFIRMED -> { /* the only checkable state */ }
+            case CHECKED_IN -> throw new BadRequestException("Booking already checked in");
+            case COMPLETED -> throw new BadRequestException("Booking already completed");
+            case CANCELLED -> throw new BadRequestException("Booking has been cancelled");
+            case PENDING_PAYMENT, AWAITING_CONFIRMATION ->
+                    throw new BadRequestException("Booking is not confirmed yet");
+        }
+    }
+
+    private Map<Long, List<BookingSlot>> loadSlots(List<Booking> bookings) {
+        List<Long> ids = bookings.stream().map(Booking::getId).toList();
+        return bookingSlotRepository.findByBooking_IdInOrderByBooking_IdAscSlotStartAsc(ids)
+                .stream()
+                .collect(Collectors.groupingBy(slot -> slot.getBooking().getId()));
+    }
+
+    private Staff resolveStaff(Long staffUserId) {
+        return staffRepository.findByUser_IdAndDeletedAtIsNull(staffUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Staff not found for user id: " + staffUserId));
     }
 
     private Staff getStaff(Long id) {

@@ -1,0 +1,26 @@
+package com.sba301.backend.repository;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.sba301.backend.entity.Booking;
+
+public interface BookingRepository extends JpaRepository<Booking, Long> {
+
+    @Query("""
+            select b from Booking b
+            join fetch b.court c
+            where c.branch.id = :branchId
+              and b.date = :date
+              and b.status <> com.sba301.backend.common.enums.BookingStatus.CANCELLED
+            order by b.id""")
+    List<Booking> findScheduleByBranchAndDate(
+            @Param("branchId") Long branchId, @Param("date") LocalDate date);
+
+    Optional<Booking> findByCheckinCode(String checkinCode);
+}

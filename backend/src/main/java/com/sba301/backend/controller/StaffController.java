@@ -1,7 +1,12 @@
 package com.sba301.backend.controller;
 
+import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE;
+
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -12,9 +17,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sba301.backend.dto.request.CreateStaffRequest;
+import com.sba301.backend.dto.request.StaffCheckinRequest;
 import com.sba301.backend.dto.request.UpdateStaffRequest;
 import com.sba301.backend.dto.response.ApiResponse;
 import com.sba301.backend.dto.response.StaffResponse;
@@ -56,5 +63,19 @@ public class StaffController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         staffService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/staff/schedule")
+    public ResponseEntity<?> schedule(
+            @RequestParam Long staffUserId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DATE) LocalDate date) {
+        return ResponseEntity.ok(ApiResponse.success(staffService.getTodaySchedule(staffUserId, date)));
+    }
+
+    @PostMapping("/staff/checkin")
+    public ResponseEntity<?> checkIn(@Valid @RequestBody StaffCheckinRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                staffService.checkIn(request.getStaffUserId(), request.getCheckinCode()),
+                "Check-in successful"));
     }
 }

@@ -15,4 +15,6 @@ public interface StaffRepository extends JpaRepository<Staff, Long> {
     Page<Staff> findAllByBranchIdAndDeletedAtIsNull(Long branchId, Pageable pageable);
 
     boolean existsByUserIdAndDeletedAtIsNull(Long userId);
+
+    Optional<Staff> findByUser_IdAndDeletedAtIsNull(Long userId);
 }
