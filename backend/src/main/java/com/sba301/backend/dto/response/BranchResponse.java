@@ -3,7 +3,7 @@ package com.sba301.backend.dto.response;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 
-import com.sba301.backend.entity.BranchStatus;
+import com.sba301.backend.common.enums.BranchStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -2,7 +2,7 @@ package com.sba301.backend.dto.request;
 
 import java.time.LocalTime;
 
-import com.sba301.backend.entity.BranchStatus;
+import com.sba301.backend.common.enums.BranchStatus;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

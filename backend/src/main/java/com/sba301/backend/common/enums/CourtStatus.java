@@ -1,4 +1,4 @@
-package com.sba301.backend.entity;
+package com.sba301.backend.common.enums;
 
 public enum CourtStatus {
     ACTIVE,
