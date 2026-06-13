@@ -1,12 +1,11 @@
 package com.sba301.backend.entity;
 
-import java.time.LocalTime;
 import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.sba301.backend.common.enums.BranchStatus;
+import com.sba301.backend.common.enums.CourtStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,56 +23,36 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "branches")
+@Table(name = "courts")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Branch {
+public class Court {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "admin_id", nullable = false)
-    private User admin;
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
 
     @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(nullable = false, length = 255)
-    private String address;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "court_type_id", nullable = false)
+    private CourtType courtType;
 
-    @Column(length = 100)
-    private String ward;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(nullable = false, length = 100)
-    private String city;
-
-    @Column(length = 20)
-    private String phone;
-
-    @Column(name = "open_time", nullable = false)
-    private LocalTime openTime;
-
-    @Column(name = "close_time", nullable = false)
-    private LocalTime closeTime;
-
-    @Column(name = "bank_account_number", length = 50)
-    private String bankAccountNumber;
-
-    @Column(name = "bank_account_name", length = 150)
-    private String bankAccountName;
-
-    @Column(name = "bank_name", length = 100)
-    private String bankName;
-
-    @Column(name = "bank_qr_image_url", columnDefinition = "TEXT")
-    private String bankQrImageUrl;
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private BranchStatus status = BranchStatus.ACTIVE;
+    private CourtStatus status = CourtStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

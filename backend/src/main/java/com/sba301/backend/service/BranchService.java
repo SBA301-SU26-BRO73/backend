@@ -5,13 +5,48 @@ import com.sba301.backend.dto.response.BranchResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 
 public interface BranchService {
 
-    BranchResponse getBranchById(Long id);
+    /**
+     * Creates a branch for an existing admin.
+     *
+     * @param request branch creation data
+     * @return the created branch
+     */
+    BranchResponse create(CreateBranchRequest request);
 
-    Page<BranchResponse> getAllActiveBranchesPaginated(Pageable pageable);
+    /**
+     * Gets an active, non-deleted branch by id.
+     *
+     * @param id branch id
+     * @return the matching branch
+     */
+    BranchResponse getById(Long id);
+
+    /**
+     * Gets a page of active, non-deleted branches.
+     *
+     * @param pageable pagination and sorting information
+     * @return a page of branches
+     */
+    Page<BranchResponse> getAll(Pageable pageable);
+
+    /**
+     * Updates all mutable fields of a non-deleted branch.
+     *
+     * @param id branch id
+     * @param request updated branch data
+     * @return the updated branch
+     */
+    BranchResponse update(Long id, UpdateBranchRequest request);
+
+    /**
+     * Soft deletes a branch by changing its status to INACTIVE and setting deletedAt.
+     *
+     * @param id branch id
+     */
+    void delete(Long id);
 
     Page<BranchResponse> searchBranchesWithPagination(BranchFilterRequest filterDto, Pageable pageable);
 }

@@ -1,10 +1,11 @@
-package com.sba301.backend.dto.response;
+package com.sba301.backend.dto.request;
 
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 
 import com.sba301.backend.common.enums.BranchStatus;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,23 +17,35 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BranchResponse {
+public class UpdateBranchRequest {
 
-    private Long id;
+    @NotNull(message = "Admin id is required")
     private Long adminId;
-    private String adminName;
+
+    @NotBlank(message = "Name is required")
     private String name;
+
+    @NotBlank(message = "Address is required")
     private String address;
+
     private String ward;
+
+    @NotBlank(message = "City is required")
     private String city;
+
     private String phone;
+
+    @NotNull(message = "Open time is required")
     private LocalTime openTime;
+
+    @NotNull(message = "Close time is required")
     private LocalTime closeTime;
+
     private String bankAccountNumber;
     private String bankAccountName;
     private String bankName;
     private String bankQrImageUrl;
+
+    @NotNull(message = "Status is required")
     private BranchStatus status;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
 }

@@ -1,41 +1,61 @@
 package com.sba301.backend.controller;
 
-import com.sba301.backend.dto.request.BranchFilterRequest;
-import com.sba301.backend.dto.response.ApiResponse;
-import com.sba301.backend.dto.response.BranchResponse;
-import com.sba301.backend.service.BranchService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.sba301.backend.dto.request.CreateBranchRequest;
+import com.sba301.backend.dto.request.UpdateBranchRequest;
+import com.sba301.backend.dto.response.ApiResponse;
+import com.sba301.backend.service.BranchService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/branches")
+@RequiredArgsConstructor
+@Validated
 public class BranchController {
 
     private final BranchService branchService;
 
-    public BranchController(BranchService branchService) {
-        this.branchService = branchService;
-    }
-
-    @GetMapping("/{id}")
-    public ApiResponse<BranchResponse> getBranchById(@PathVariable Long id) {
-        BranchResponse data = branchService.getBranchById(id);
-        return ApiResponse.success(data, "Lấy thông tin chi tiết cơ sở thành công");
+    @PostMapping
+    public ResponseEntity<?> create(@Valid @RequestBody CreateBranchRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(branchService.create(request), "Branch created successfully", 201));
     }
 
     @GetMapping
-    public ApiResponse<Page<BranchResponse>> getAllBranchesPaginated(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<?> getAll(Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(branchService.getAll(pageable)));
+    }
 
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<BranchResponse> pageData = branchService.getAllActiveBranchesPaginated(pageable);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(branchService.getById(id)));
+    }
 
-        return ApiResponse.success(pageData, "Lấy danh sách cơ sở phân trang thành công");
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateBranchRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(branchService.update(id, request), "Branch updated successfully"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        branchService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search")
@@ -46,11 +66,6 @@ public class BranchController {
 
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<BranchResponse> pageData = branchService.searchBranchesWithPagination(filterDto, pageable);
-
-//        if (pageData.isEmpty()) {
-//            return ApiResponse.success(pageData, "Không tìm thấy cơ sở nào phù hợp");
-//        }
-
-        return ApiResponse.success(pageData, "Tìm kiếm và lọc cơ sở thành công");
+        return ApiResponse.success(pageData, "Database search and filtering successful");
     }
 }
