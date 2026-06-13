@@ -10,4 +10,5 @@ public class BranchFilterRequest {
     private String city;
     private String phone;
     private String status;
+    private String courtTypeName;
 }

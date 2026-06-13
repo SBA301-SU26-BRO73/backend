@@ -3,6 +3,7 @@ package com.sba301.backend.service.impl;
 import java.time.OffsetDateTime;
 
 import com.sba301.backend.dto.request.BranchFilterRequest;
+import com.sba301.backend.repository.specifacation.BranchSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -99,24 +100,8 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public Page<BranchResponse> searchBranchesWithPagination(BranchFilterRequest filterDto, Pageable pageable) {
-        BranchStatus branchStatus = null;
-        if (filterDto.getStatus() != null && !filterDto.getStatus().trim().isEmpty()) {
-            try {
-                branchStatus = BranchStatus.valueOf(filterDto.getStatus().trim().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                branchStatus = null;
-            }
-        }
-        Page<Branch> branchPage = branchRepository.searchBranches(
-                filterDto.getName(),
-                filterDto.getAddress(),
-                filterDto.getWard(),
-                filterDto.getCity(),
-                filterDto.getPhone(),
-                branchStatus,
-                pageable
-        );
-
+        Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto);
+        Page<Branch> branchPage = branchRepository.findAll(spec, pageable);
         return branchPage.map(branchMapper::toResponse);
     }
 }
