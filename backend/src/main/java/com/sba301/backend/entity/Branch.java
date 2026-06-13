@@ -1,21 +1,33 @@
 package com.sba301.backend.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.util.List;
 
-@Data
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import com.sba301.backend.common.enums.BranchStatus;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Entity
 @Table(name = "branches")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Branch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "admin_id", nullable = false)
-    private Long adminId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "admin_id", nullable = false)
+    private User admin;
 
     @Column(nullable = false, length = 150)
     private String name;
@@ -50,27 +62,21 @@ public class Branch {
     @Column(name = "bank_qr_image_url", columnDefinition = "TEXT")
     private String bankQrImageUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "ACTIVE";
+    private BranchStatus status = BranchStatus.ACTIVE;
 
+    @OneToMany(mappedBy = "branch")
+    private List<Court> courts;
+
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
-
-    // Tự động gán thời gian khi insert/update
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = OffsetDateTime.now();
-        this.updatedAt = OffsetDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = OffsetDateTime.now();
-    }
 }

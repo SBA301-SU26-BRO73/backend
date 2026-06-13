@@ -1,5 +1,6 @@
 package com.sba301.backend.repository;
 
+import java.time.LocalTime;
 import com.sba301.backend.repository.projection.DailySlotProjection;
 import com.sba301.backend.entity.TimeSlotTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,10 +10,32 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface TimeSlotTemplateRepository extends JpaRepository<TimeSlotTemplate, Long> {
 
+    Optional<TimeSlotTemplate> findByIdAndDeletedAtIsNull(Long id);
+
+    Page<TimeSlotTemplate> findAllByDeletedAtIsNull(Pageable pageable);
+
+    List<TimeSlotTemplate> findByCourtIdAndDeletedAtIsNull(Long courtId);
+
+    boolean existsByCourtIdAndDayOfWeekAndStartTimeAndEndTimeAndDeletedAtIsNull(
+            Long courtId,
+            Short dayOfWeek,
+            LocalTime startTime,
+            LocalTime endTime);
+
+    boolean existsByCourtIdAndDayOfWeekAndStartTimeAndEndTimeAndDeletedAtIsNullAndIdNot(
+            Long courtId,
+            Short dayOfWeek,
+            LocalTime startTime,
+            LocalTime endTime,
+            Long id);
     @Query(value = """
         SELECT t.start_time AS startTime,
                t.end_time AS endTime,

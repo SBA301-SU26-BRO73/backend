@@ -7,5 +7,5 @@ public interface DailySlotProjection {
     LocalTime getStartTime();
     LocalTime getEndTime();
     BigDecimal getPrice();
-    String getStatus(); // Nhận 1 trong 4 giá trị: AVAILABLE, BOOKED, HOLDING, EXPIRED
+    String getStatus();
 }

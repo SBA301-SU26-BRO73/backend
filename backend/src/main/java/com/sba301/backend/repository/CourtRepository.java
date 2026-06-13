@@ -1,9 +1,21 @@
 package com.sba301.backend.repository;
 
-import com.sba301.backend.entity.Court;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
-@Repository
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.sba301.backend.entity.Court;
+
 public interface CourtRepository extends JpaRepository<Court, Long> {
+
+    Optional<Court> findByIdAndDeletedAtIsNull(Long id);
+
+    Page<Court> findAllByDeletedAtIsNull(Pageable pageable);
+
+    boolean existsByBranchIdAndNameIgnoreCaseAndDeletedAtIsNull(Long branchId, String name);
+
+    boolean existsByBranchIdAndNameIgnoreCaseAndDeletedAtIsNullAndIdNot(
+            Long branchId, String name, Long id);
 }

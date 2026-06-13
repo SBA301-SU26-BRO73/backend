@@ -1,30 +1,37 @@
 package com.sba301.backend.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "time_slot_templates")
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class TimeSlotTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Lưu ý: Nếu bạn đã có Entity Court, hãy dùng @ManyToOne như bên dưới.
-    // Nếu chưa tạo Entity Court, bạn có thể tạm dùng: @Column(name = "court_id") private Long courtId;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "court_id", nullable = false)
     private Court court;
 
@@ -41,24 +48,16 @@ public class TimeSlotTemplate {
     private Short dayOfWeek;
 
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+    private boolean active = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    // Gán giá trị mặc định cho is_active theo đúng SQL Script
-    @PrePersist
-    public void prePersist() {
-        if (this.isActive == null) {
-            this.isActive = true;
-        }
-    }
+    private OffsetDateTime deletedAt;
 }
