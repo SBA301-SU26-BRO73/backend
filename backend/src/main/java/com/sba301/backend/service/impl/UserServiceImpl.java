@@ -4,7 +4,7 @@ import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.common.enums.UserRole;
 import com.sba301.backend.common.enums.UserStatus;
 import com.sba301.backend.config.exception.AppException;
-import com.sba301.backend.dto.mapper.UserMapper;
+import com.sba301.backend.mapper.UserMapper;
 import com.sba301.backend.dto.response.UserResponse;
 import com.sba301.backend.entity.User;
 import com.sba301.backend.repository.UserRepository;
