@@ -381,6 +381,7 @@ class StaffServiceImplTest {
 
         assertThat(staff.getDeletedAt()).isNotNull();
         assertThat(user.getStatus()).isEqualTo(UserStatus.INACTIVE);
+        assertThat(user.getDeletedAt()).isNotNull();
         verify(userRepository).save(user);
         verify(staffRepository).save(staff);
     }

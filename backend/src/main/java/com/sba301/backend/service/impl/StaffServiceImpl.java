@@ -132,8 +132,12 @@ public class StaffServiceImpl implements StaffService {
     @Transactional
     public void delete(Long id) {
         Staff staff = getStaff(id);
-        staff.setDeletedAt(OffsetDateTime.now());
+        OffsetDateTime now = OffsetDateTime.now();
+        staff.setDeletedAt(now);
         staff.getUser().setStatus(UserStatus.INACTIVE);
+        // Soft-delete the user too so the email is released for reuse
+        // (create() blocks only emails whose user row is not soft-deleted).
+        staff.getUser().setDeletedAt(now);
         userRepository.save(staff.getUser());
         staffRepository.save(staff);
     }
