@@ -19,7 +19,11 @@ public enum ErrorEnum {
 
         BRANCH_NOT_FOUND(404, "branch_not_found", "Branch not found"),
         ADMIN_NOT_FOUND(404, "admin_not_found", "Admin not found"),
-        BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists");
+        BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists"),
+
+        USER_NOT_PENDING(400, "user_not_pending", "User is not pending approval"),
+        USER_NOT_LOCKED(400, "user_not_locked", "User is not locked"),
+        USER_ALREADY_LOCKED(400, "user_already_locked", "User is already locked");
 
         private final int httpStatus;
         private final String code;
