@@ -105,6 +105,19 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void registerCustomer_PhoneAlreadyExists_ShouldThrow() {
+        CustomerRegisterRequest request = new CustomerRegisterRequest("Nguyen Van A", "new@example.com", "0901234567", "password123");
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhone(request.getPhone())).thenReturn(true);
+
+        AppException ex = assertThrows(AppException.class, () -> authService.registerCustomer(request));
+
+        assertEquals(ErrorEnum.PHONE_ALREADY_EXISTS, ex.getErrorEnum());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void registerCourtOwner_Success_ShouldSaveUserAndDocuments() {
         MockMultipartFile legalDoc = new MockMultipartFile("legalDocuments", "cmnd.jpg", "image/jpeg", "data".getBytes());
         CourtOwnerRegisterRequest request = new CourtOwnerRegisterRequest(
@@ -121,6 +134,22 @@ class AuthServiceImplTest {
 
         verify(userRepository).save(any(User.class));
         verify(userDocumentRepository, atLeastOnce()).save(any());
+    }
+
+    @Test
+    void registerCourtOwner_PhoneAlreadyExists_ShouldThrow() {
+        MockMultipartFile legalDoc = new MockMultipartFile("legalDocuments", "cmnd.jpg", "image/jpeg", "data".getBytes());
+        CourtOwnerRegisterRequest request = new CourtOwnerRegisterRequest(
+                "new@example.com", "0901234567", "password12345", List.of(legalDoc), null
+        );
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhone(request.getPhone())).thenReturn(true);
+
+        AppException ex = assertThrows(AppException.class, () -> authService.registerCourtOwner(request));
+
+        assertEquals(ErrorEnum.PHONE_ALREADY_EXISTS, ex.getErrorEnum());
+        verify(userRepository, never()).save(any());
     }
 
     @Test

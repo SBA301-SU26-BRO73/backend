@@ -13,6 +13,7 @@ public enum ErrorEnum {
         INVALID_CREDENTIALS(401, "invalid_credentials", "Invalid email or password"),
         INVALID_TOKEN(401, "invalid_token", "Token is invalid or expired"),
         EMAIL_ALREADY_EXISTS(409, "email_already_exists", "Email is already registered"),
+        PHONE_ALREADY_EXISTS(409, "phone_already_exists", "Phone number is already registered"),
         USER_NOT_FOUND(404, "user_not_found", "User not found"),
         RESOURCE_NOT_FOUND(404, "resource_not_found", "Resource with id %s not found"),
         ACCOUNT_INACTIVE(403, "account_inactive", "Account is not active"),
