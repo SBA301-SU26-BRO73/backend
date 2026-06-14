@@ -10,7 +10,11 @@ public enum ErrorEnum {
         BRANCH_NOT_FOUND(404, "branch_not_found", "Branch not found"),
         ADMIN_NOT_FOUND(404, "admin_not_found", "Admin not found"),
         BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists"),
-        INTERNAL_SERVER_ERROR(500, "internal_server_error", "An error occurred. Please try again later.");
+        INTERNAL_SERVER_ERROR(500, "internal_server_error", "An error occurred. Please try again later."),
+        COURT_TYPE_NOT_FOUND(404, "court_type_not_found", "Court type not found"),
+        COURT_TYPE_NAME_ALREADY_EXISTS(409, "court_type_name_already_exists", "Court type name already exists"),
+        SUBSCRIPTION_PLAN_NOT_FOUND(404, "subscription_plan_not_found", "Subscription plan not found"),
+        SUBSCRIPTION_PLAN_NAME_ALREADY_EXISTS(409, "subscription_plan_name_already_exists", "Subscription plan name already exists");
         
         private final int httpStatus;
         private final String code;
