@@ -15,12 +15,15 @@ public enum ErrorEnum {
         EMAIL_ALREADY_EXISTS(409, "email_already_exists", "Email is already registered"),
         USER_NOT_FOUND(404, "user_not_found", "User not found"),
         RESOURCE_NOT_FOUND(404, "resource_not_found", "Resource with id %s not found"),
-        ACCOUNT_INACTIVE(403, "account_inactive", "Account is not active");
-        
+        ACCOUNT_INACTIVE(403, "account_inactive", "Account is not active"),
+
+        BRANCH_NOT_FOUND(404, "branch_not_found", "Branch not found"),
+        ADMIN_NOT_FOUND(404, "admin_not_found", "Admin not found"),
+        BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists");
+
         private final int httpStatus;
         private final String code;
         private final String message;
-
 
         ErrorEnum(int httpStatus, String code, String message) {
                 this.httpStatus = httpStatus;

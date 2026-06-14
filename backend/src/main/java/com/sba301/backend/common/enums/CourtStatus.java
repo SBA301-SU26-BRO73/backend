@@ -1,8 +1,7 @@
 package com.sba301.backend.common.enums;
 
-public enum UserStatus {
-    PENDING_APPROVAL,
+public enum CourtStatus {
     ACTIVE,
     INACTIVE,
-    LOCKED
+    MAINTENANCE
 }
