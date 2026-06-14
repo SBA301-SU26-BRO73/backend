@@ -7,12 +7,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyShort;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -36,14 +40,19 @@ import com.sba301.backend.common.enums.UserStatus;
 import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.CreateStaffRequest;
 import com.sba301.backend.dto.request.UpdateStaffRequest;
+import com.sba301.backend.dto.request.WalkInBookingRequest;
 import com.sba301.backend.dto.response.StaffCheckinResponse;
+import com.sba301.backend.dto.response.StaffCheckoutResponse;
 import com.sba301.backend.dto.response.StaffResponse;
 import com.sba301.backend.dto.response.StaffScheduleResponse;
+import com.sba301.backend.dto.response.WalkInBookingResponse;
 import com.sba301.backend.entity.Booking;
 import com.sba301.backend.entity.BookingSlot;
 import com.sba301.backend.entity.Branch;
 import com.sba301.backend.entity.Court;
+import com.sba301.backend.entity.Payment;
 import com.sba301.backend.entity.Staff;
+import com.sba301.backend.entity.TimeSlotTemplate;
 import com.sba301.backend.entity.User;
 import com.sba301.backend.exception.BadRequestException;
 import com.sba301.backend.exception.ResourceNotFoundException;
@@ -52,7 +61,10 @@ import com.sba301.backend.mapper.StaffScheduleMapper;
 import com.sba301.backend.repository.BookingRepository;
 import com.sba301.backend.repository.BookingSlotRepository;
 import com.sba301.backend.repository.BranchRepository;
+import com.sba301.backend.repository.CourtRepository;
+import com.sba301.backend.repository.PaymentRepository;
 import com.sba301.backend.repository.StaffRepository;
+import com.sba301.backend.repository.TimeSlotTemplateRepository;
 import com.sba301.backend.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,6 +100,15 @@ class StaffServiceImplTest {
 
     @Mock
     private StaffScheduleMapper staffScheduleMapper;
+
+    @Mock
+    private CourtRepository courtRepository;
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private TimeSlotTemplateRepository timeSlotTemplateRepository;
 
     @InjectMocks
     private StaffServiceImpl staffService;
@@ -507,6 +528,169 @@ class StaffServiceImplTest {
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> staffService.checkIn(STAFF_USER_ID, CODE));
         assertEquals("Booking is not confirmed yet", ex.getMessage());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    // --- createWalkInBooking ---
+
+    @Test
+    void createWalkInBooking_success() {
+        WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
+                .courtId(COURT_ID)
+                .guestPhone("0901234567")
+                .slotStarts(List.of(LocalTime.of(8, 0)))
+                .build();
+
+        TimeSlotTemplate template = new TimeSlotTemplate();
+        template.setPrice(new BigDecimal("50000"));
+
+        Payment savedPayment = new Payment();
+        savedPayment.setId(5L);
+
+        Booking savedBooking = new Booking();
+        savedBooking.setId(200L);
+        savedBooking.setCourt(court);
+        savedBooking.setStatus(BookingStatus.CHECKED_IN);
+        savedBooking.setTotalPrice(new BigDecimal("50000"));
+        savedBooking.setCheckinCode("some-uuid");
+        savedBooking.setCheckedInAt(OffsetDateTime.now());
+
+        WalkInBookingResponse expected = WalkInBookingResponse.builder().bookingId(200L).build();
+
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(courtRepository.findByIdAndDeletedAtIsNull(COURT_ID)).thenReturn(Optional.of(court));
+        when(bookingSlotRepository.existsByCourt_IdAndBookingDateAndSlotStart(anyLong(), any(), any()))
+                .thenReturn(false);
+        when(timeSlotTemplateRepository.findByCourtIdAndDayOfWeekAndStartTimeAndActiveTrueAndDeletedAtIsNull(
+                anyLong(), anyShort(), any())).thenReturn(Optional.of(template));
+        when(paymentRepository.save(any(Payment.class))).thenReturn(savedPayment);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+        when(bookingSlotRepository.saveAll(anyList())).thenReturn(List.of());
+        when(bookingSlotRepository.findByBooking_IdInOrderByBooking_IdAscSlotStartAsc(anyList()))
+                .thenReturn(List.of());
+        when(staffScheduleMapper.toWalkInResponse(any(), anyList(), any())).thenReturn(expected);
+
+        WalkInBookingResponse result = staffService.createWalkInBooking(request);
+
+        assertThat(result).isEqualTo(expected);
+        verify(paymentRepository).save(any(Payment.class));
+        verify(bookingRepository).save(any(Booking.class));
+        verify(bookingSlotRepository).saveAll(anyList());
+    }
+
+    @Test
+    void createWalkInBooking_slotTaken_throwsBadRequest() {
+        WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
+                .courtId(COURT_ID)
+                .guestPhone("0901234567")
+                .slotStarts(List.of(LocalTime.of(8, 0)))
+                .build();
+
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(courtRepository.findByIdAndDeletedAtIsNull(COURT_ID)).thenReturn(Optional.of(court));
+        when(bookingSlotRepository.existsByCourt_IdAndBookingDateAndSlotStart(anyLong(), any(), any()))
+                .thenReturn(true);
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> staffService.createWalkInBooking(request));
+        assertThat(ex.getMessage()).startsWith("Slot already booked");
+        verify(bookingRepository, never()).save(any(Booking.class));
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    void createWalkInBooking_courtOtherBranch_throwsBadRequest() {
+        Branch otherBranch = new Branch();
+        otherBranch.setId(OTHER_BRANCH_ID);
+        court.setBranch(otherBranch);
+
+        WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
+                .courtId(COURT_ID)
+                .guestPhone("0901234567")
+                .slotStarts(List.of(LocalTime.of(8, 0)))
+                .build();
+
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(courtRepository.findByIdAndDeletedAtIsNull(COURT_ID)).thenReturn(Optional.of(court));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> staffService.createWalkInBooking(request));
+        assertEquals("Court belongs to another branch", ex.getMessage());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void createWalkInBooking_noPriceTemplate_throwsBadRequest() {
+        WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
+                .courtId(COURT_ID)
+                .guestPhone("0901234567")
+                .slotStarts(List.of(LocalTime.of(8, 0)))
+                .build();
+
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(courtRepository.findByIdAndDeletedAtIsNull(COURT_ID)).thenReturn(Optional.of(court));
+        when(bookingSlotRepository.existsByCourt_IdAndBookingDateAndSlotStart(anyLong(), any(), any()))
+                .thenReturn(false);
+        when(timeSlotTemplateRepository.findByCourtIdAndDayOfWeekAndStartTimeAndActiveTrueAndDeletedAtIsNull(
+                anyLong(), anyShort(), any())).thenReturn(Optional.empty());
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> staffService.createWalkInBooking(request));
+        assertThat(ex.getMessage()).startsWith("No price configured for slot");
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    // --- checkout ---
+
+    @Test
+    void checkout_success() {
+        booking.setStatus(BookingStatus.CHECKED_IN);
+
+        StaffCheckoutResponse expected = StaffCheckoutResponse.builder()
+                .bookingId(BOOKING_ID).status(BookingStatus.COMPLETED).build();
+
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(booking)).thenReturn(booking);
+        when(staffScheduleMapper.toCheckoutResponse(booking)).thenReturn(expected);
+
+        StaffCheckoutResponse result = staffService.checkout(STAFF_USER_ID, BOOKING_ID);
+
+        assertThat(result).isEqualTo(expected);
+        assertEquals(BookingStatus.COMPLETED, booking.getStatus());
+        assertNotNull(booking.getCompletedAt());
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void checkout_notCheckedIn_throwsBadRequest() {
+        // booking default status is CONFIRMED (set in @BeforeEach)
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> staffService.checkout(STAFF_USER_ID, BOOKING_ID));
+        assertEquals("Booking has not been checked in yet", ex.getMessage());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void checkout_otherBranch_throwsBadRequest() {
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        Branch otherBranch = new Branch();
+        otherBranch.setId(OTHER_BRANCH_ID);
+        court.setBranch(otherBranch);
+
+        when(staffRepository.findByUser_IdAndDeletedAtIsNull(STAFF_USER_ID)).thenReturn(Optional.of(staff));
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> staffService.checkout(STAFF_USER_ID, BOOKING_ID));
+        assertEquals("Booking belongs to another branch", ex.getMessage());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 }

@@ -30,4 +30,9 @@ public interface TimeSlotTemplateRepository extends JpaRepository<TimeSlotTempla
             LocalTime startTime,
             LocalTime endTime,
             Long id);
+
+    Optional<TimeSlotTemplate> findByCourtIdAndDayOfWeekAndStartTimeAndActiveTrueAndDeletedAtIsNull(
+            Long courtId,
+            Short dayOfWeek,
+            LocalTime startTime);
 }

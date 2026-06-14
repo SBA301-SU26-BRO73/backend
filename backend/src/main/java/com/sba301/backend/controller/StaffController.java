@@ -22,7 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sba301.backend.dto.request.CreateStaffRequest;
 import com.sba301.backend.dto.request.StaffCheckinRequest;
+import com.sba301.backend.dto.request.StaffCheckoutRequest;
 import com.sba301.backend.dto.request.UpdateStaffRequest;
+import com.sba301.backend.dto.request.WalkInBookingRequest;
 import com.sba301.backend.dto.response.ApiResponse;
 import com.sba301.backend.dto.response.StaffResponse;
 import com.sba301.backend.service.StaffService;
@@ -77,5 +79,18 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.success(
                 staffService.checkIn(request.getStaffUserId(), request.getCheckinCode()),
                 "Check-in successful"));
+    }
+
+    @PostMapping("/staff/walk-in-bookings")
+    public ResponseEntity<?> walkIn(@Valid @RequestBody WalkInBookingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.success(staffService.createWalkInBooking(request), "Walk-in booking created", 201));
+    }
+
+    @PostMapping("/staff/checkout")
+    public ResponseEntity<?> checkout(@Valid @RequestBody StaffCheckoutRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                staffService.checkout(request.getStaffUserId(), request.getBookingId()),
+                "Checkout successful"));
     }
 }

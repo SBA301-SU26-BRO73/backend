@@ -66,6 +66,9 @@ public class Booking {
     @Column(name = "checked_in_at")
     private OffsetDateTime checkedInAt;
 
+    @Column(name = "completed_at")
+    private OffsetDateTime completedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
