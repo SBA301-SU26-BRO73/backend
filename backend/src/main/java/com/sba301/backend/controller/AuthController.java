@@ -1,19 +1,18 @@
 package com.sba301.backend.controller;
 
+import com.sba301.backend.dto.request.CourtOwnerRegisterRequest;
+import com.sba301.backend.dto.request.CustomerRegisterRequest;
 import com.sba301.backend.dto.request.LoginRequest;
 import com.sba301.backend.dto.request.RefreshTokenRequest;
-import com.sba301.backend.dto.request.RegisterRequest;
 import com.sba301.backend.dto.response.ApiResponse;
 import com.sba301.backend.dto.response.TokenResponse;
 import com.sba301.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,10 +21,17 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<TokenResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        TokenResponse response = authService.register(request);
+    @PostMapping("/register/customer")
+    public ResponseEntity<ApiResponse<TokenResponse>> registerCustomer(@Valid @RequestBody CustomerRegisterRequest request) {
+        TokenResponse response = authService.registerCustomer(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response, "Registered successfully."));
+    }
+
+    @PostMapping(value = "/register/court-owner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> registerCourtOwner(@Valid @ModelAttribute CourtOwnerRegisterRequest request) {
+        authService.registerCourtOwner(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(null, "Registration submitted. Awaiting admin approval."));
     }
 
     @PostMapping("/login")
