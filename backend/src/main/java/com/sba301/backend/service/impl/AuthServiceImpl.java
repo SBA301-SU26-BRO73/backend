@@ -3,7 +3,7 @@ package com.sba301.backend.service.impl;
 import com.sba301.backend.common.enums.DocumentType;
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.config.exception.AppException;
-import com.sba301.backend.dto.mapper.UserMapper;
+import com.sba301.backend.mapper.UserMapper;
 import com.sba301.backend.dto.request.CourtOwnerRegisterRequest;
 import com.sba301.backend.dto.request.CustomerRegisterRequest;
 import com.sba301.backend.dto.request.LoginRequest;
