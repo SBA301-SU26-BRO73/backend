@@ -57,6 +57,11 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    public String extractRole(String token) {
+        return parseClaims(token).get(CLAIM_USER_ROLE, String.class);
+    }
+
+    @Override
     public boolean isTokenValid(String token) {
         try {
             parseClaims(token);

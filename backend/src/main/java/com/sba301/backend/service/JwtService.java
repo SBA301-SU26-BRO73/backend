@@ -7,5 +7,6 @@ public interface JwtService {
     String generateRefreshToken(User user);
     String extractEmail(String token);
     String extractTokenType(String token);
+    String extractRole(String token);
     boolean isTokenValid(String token);
 }

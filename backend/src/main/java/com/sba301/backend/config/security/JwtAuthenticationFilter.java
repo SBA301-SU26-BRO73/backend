@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.sba301.backend.service.JwtService;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -28,7 +29,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String ACCESS_TOKEN = "access_token";
 
     private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -38,10 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtService.isTokenValid(token) && ACCESS_TOKEN.equals(jwtService.extractTokenType(token))) {
             String email = jwtService.extractEmail(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            String role = jwtService.extractRole(token);
 
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
+                    email, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
