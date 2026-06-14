@@ -22,4 +22,6 @@ public interface CourtService {
     CourtResponse update(Long id, UpdateCourtRequest request);
 
     void delete(Long id);
+
+    List<CourtResponse> getCourtsByBranch(Long branchId);
 }

@@ -1,5 +1,6 @@
 package com.sba301.backend.controller;
 
+import com.sba301.backend.service.CourtService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class BranchController {
 
     private final BranchService branchService;
+    private final CourtService courtService;
 
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody CreateBranchRequest request) {
@@ -56,5 +58,9 @@ public class BranchController {
     public ResponseEntity<?> delete(@PathVariable Long id) {
         branchService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/{id}/courts")
+    public ResponseEntity<?> getCourtsByBranch(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(courtService.getCourtsByBranch(id)));
     }
 }

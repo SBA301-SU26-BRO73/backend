@@ -156,4 +156,15 @@ public class CourtServiceImpl implements CourtService {
                 .map(courtMapper::toDailySlotResponse)
                 .toList();
     }
+
+    @Override
+    public List<CourtResponse> getCourtsByBranch(Long branchId) {
+        if (!branchRepository.existsById(branchId)) {
+            throw new ResourceNotFoundException("Branch not found with id: " + branchId);
+        }
+        return courtRepository.findAllByBranchIdAndDeletedAtIsNull(branchId)
+                .stream()
+                .map(courtMapper::toResponse)
+                .toList();
+    }
 }
