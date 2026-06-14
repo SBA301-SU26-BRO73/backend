@@ -49,6 +49,9 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorEnum.EMAIL_ALREADY_EXISTS);
         }
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorEnum.PHONE_ALREADY_EXISTS);
+        }
 
         User user = userMapper.toCustomerEntity(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -62,6 +65,9 @@ public class AuthServiceImpl implements AuthService {
     public void registerCourtOwner(CourtOwnerRegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorEnum.EMAIL_ALREADY_EXISTS);
+        }
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorEnum.PHONE_ALREADY_EXISTS);
         }
 
         User user = userMapper.toCourtOwnerEntity(request);
