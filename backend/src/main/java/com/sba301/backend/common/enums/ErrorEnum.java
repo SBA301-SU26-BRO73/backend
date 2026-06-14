@@ -8,6 +8,7 @@ public enum ErrorEnum {
         INVALID_INPUT(400, "invalid_input", "Invalid input data"),
         INVALID_INPUT_COMMON(400, "invalid_input", "%s"),
         BRANCH_NOT_FOUND(404, "branch_not_found", "Branch not found"),
+        BOOKING_NOT_FOUND(404, "booking_not_found", "Booking not found"),
         ADMIN_NOT_FOUND(404, "admin_not_found", "Admin not found"),
         BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists"),
         INTERNAL_SERVER_ERROR(500, "internal_server_error", "An error occurred. Please try again later.");
