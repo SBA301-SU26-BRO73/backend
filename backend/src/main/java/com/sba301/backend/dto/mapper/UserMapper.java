@@ -2,6 +2,7 @@ package com.sba301.backend.dto.mapper;
 
 import com.sba301.backend.dto.request.CourtOwnerRegisterRequest;
 import com.sba301.backend.dto.request.CustomerRegisterRequest;
+import com.sba301.backend.dto.response.UserResponse;
 import com.sba301.backend.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -27,4 +28,6 @@ public interface UserMapper {
     @Mapping(target = "role", constant = "ADMIN")
     @Mapping(target = "status", constant = "PENDING_APPROVAL")
     User toCourtOwnerEntity(CourtOwnerRegisterRequest request);
+
+    UserResponse toResponse(User user);
 }
