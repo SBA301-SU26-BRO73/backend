@@ -59,6 +59,7 @@ public class BranchController {
     @GetMapping("/{id}/courts")
     public ResponseEntity<?> getCourtsByBranch(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(courtService.getCourtsByBranch(id)));
+    }
 
     @GetMapping("/search")
     public ApiResponse<Page<BranchResponse>> searchBranchesPaginated(
