@@ -1,5 +1,8 @@
 package com.sba301.backend.service;
 
+import com.sba301.backend.dto.response.DailySlotResponse;
+import java.time.LocalDate;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -8,6 +11,7 @@ import com.sba301.backend.dto.request.UpdateCourtRequest;
 import com.sba301.backend.dto.response.CourtResponse;
 
 public interface CourtService {
+    List<DailySlotResponse> getDailyCourtSchedule(Long courtId, LocalDate date);
 
     CourtResponse create(CreateCourtRequest request);
 
@@ -18,4 +22,6 @@ public interface CourtService {
     CourtResponse update(Long id, UpdateCourtRequest request);
 
     void delete(Long id);
+
+    List<CourtResponse> getCourtsByBranch(Long branchId);
 }

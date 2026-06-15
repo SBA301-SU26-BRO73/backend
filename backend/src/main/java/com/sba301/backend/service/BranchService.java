@@ -1,15 +1,13 @@
 package com.sba301.backend.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
+import com.sba301.backend.dto.request.BranchFilterRequest;
 import com.sba301.backend.dto.request.CreateBranchRequest;
 import com.sba301.backend.dto.request.UpdateBranchRequest;
 import com.sba301.backend.dto.response.BranchResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-/**
- * Provides CRUD operations for branches.
- */
+
 public interface BranchService {
 
     /**
@@ -51,4 +49,6 @@ public interface BranchService {
      * @param id branch id
      */
     void delete(Long id);
+
+    Page<BranchResponse> searchBranchesWithPagination(BranchFilterRequest filterDto, Pageable pageable);
 }
