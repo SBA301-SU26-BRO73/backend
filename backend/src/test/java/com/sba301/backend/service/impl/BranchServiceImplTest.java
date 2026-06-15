@@ -275,4 +275,5 @@ class BranchServiceImplTest {
         assertEquals(ErrorEnum.BRANCH_NOT_FOUND, exception.getErrorEnum());
         verify(branchRepository, never()).save(any(Branch.class));
     }
+
 }

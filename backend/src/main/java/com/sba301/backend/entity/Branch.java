@@ -61,7 +61,7 @@ public class Branch {
 
     @Column(name = "bank_account_number", length = 50)
     private String bankAccountNumber;
-                            
+
     @Column(name = "bank_account_name", length = 150)
     private String bankAccountName;
 
