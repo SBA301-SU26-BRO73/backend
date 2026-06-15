@@ -27,6 +27,7 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
+	implementation 'com.cloudinary:cloudinary-http5:2.3.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
