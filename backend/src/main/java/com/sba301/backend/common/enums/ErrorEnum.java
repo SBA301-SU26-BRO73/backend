@@ -22,6 +22,8 @@ public enum ErrorEnum {
         BOOKING_NOT_FOUND(404, "booking_not_found", "Booking not found"),
         ADMIN_NOT_FOUND(404, "admin_not_found", "Admin not found"),
         BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists"),
+        STAFF_NOT_FOUND(404, "staff_not_found", "Staff not found"),
+        USER_EMAIL_ALREADY_EXISTS(400, "user_email_already_exists", "Email already exists"),
 
         COURT_TYPE_NOT_FOUND(404, "court_type_not_found", "Court type not found"),
         COURT_TYPE_NAME_ALREADY_EXISTS(409, "court_type_name_already_exists", "Court type name already exists"),
