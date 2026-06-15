@@ -1,16 +1,11 @@
 package com.sba301.backend.controller;
 
+import com.sba301.backend.dto.response.DailySlotResponse;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.sba301.backend.dto.request.CreateCourtRequest;
 import com.sba301.backend.dto.request.UpdateCourtRequest;
@@ -19,6 +14,9 @@ import com.sba301.backend.service.CourtService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/courts")
@@ -56,4 +54,13 @@ public class CourtController {
         courtService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{courtId}/daily-schedule")
+    public ResponseEntity<ApiResponse<List<DailySlotResponse>>> getDailyCourtSchedule(
+            @PathVariable Long courtId,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<DailySlotResponse> data = courtService.getDailyCourtSchedule(courtId, date);
+        return ResponseEntity.ok(ApiResponse.success(data, "Get a list of successful itineraries"));
+    }
 }
+

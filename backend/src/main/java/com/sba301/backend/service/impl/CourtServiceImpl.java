@@ -1,7 +1,14 @@
 package com.sba301.backend.service.impl;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 
+import com.sba301.backend.common.enums.ErrorEnum;
+import com.sba301.backend.config.exception.AppException;
+import com.sba301.backend.dto.response.DailySlotResponse;
+import com.sba301.backend.repository.TimeSlotTemplateRepository;
+import com.sba301.backend.repository.projection.DailySlotProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +43,7 @@ public class CourtServiceImpl implements CourtService {
     private final BranchRepository branchRepository;
     private final CourtMapper courtMapper;
     private final CourtPricingService courtPricingService;
-
+    private final TimeSlotTemplateRepository timeSlotTemplateRepository;
     @Override
     @Transactional
     public CourtResponse create(CreateCourtRequest request) {
@@ -135,5 +142,29 @@ public class CourtServiceImpl implements CourtService {
                 branchId, name, courtId)) {
             throw new BadRequestException("Court name already exists in this branch");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailySlotResponse> getDailyCourtSchedule(Long courtId, LocalDate date) {
+        if (!courtRepository.existsById(courtId)) {
+            throw new AppException(ErrorEnum.RESOURCE_NOT_FOUND, "Not found court with ID: " + courtId);
+        }
+        return timeSlotTemplateRepository
+                .getDailyCourtSchedule(courtId, date)
+                .stream()
+                .map(courtMapper::toDailySlotResponse)
+                .toList();
+    }
+
+    @Override
+    public List<CourtResponse> getCourtsByBranch(Long branchId) {
+        if (!branchRepository.existsById(branchId)) {
+            throw new ResourceNotFoundException("Branch not found with id: " + branchId);
+        }
+        return courtRepository.findAllByBranchIdAndDeletedAtIsNull(branchId)
+                .stream()
+                .map(courtMapper::toResponse)
+                .toList();
     }
 }
