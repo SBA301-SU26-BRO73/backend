@@ -19,6 +19,7 @@ public enum ErrorEnum {
         ACCOUNT_INACTIVE(403, "account_inactive", "Account is not active"),
 
         BRANCH_NOT_FOUND(404, "branch_not_found", "Branch not found"),
+        BOOKING_NOT_FOUND(404, "booking_not_found", "Booking not found"),
         ADMIN_NOT_FOUND(404, "admin_not_found", "Admin not found"),
         BRANCH_NAME_ALREADY_EXISTS(400, "branch_name_already_exists", "Branch name already exists"),
 
