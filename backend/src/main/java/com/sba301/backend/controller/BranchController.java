@@ -1,18 +1,15 @@
 package com.sba301.backend.controller;
 
 import com.sba301.backend.service.CourtService;
+import com.sba301.backend.dto.request.BranchFilterRequest;
+import com.sba301.backend.dto.response.BranchResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.sba301.backend.dto.request.CreateBranchRequest;
 import com.sba301.backend.dto.request.UpdateBranchRequest;
@@ -62,5 +59,15 @@ public class BranchController {
     @GetMapping("/{id}/courts")
     public ResponseEntity<?> getCourtsByBranch(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(courtService.getCourtsByBranch(id)));
+
+    @GetMapping("/search")
+    public ApiResponse<Page<BranchResponse>> searchBranchesPaginated(
+            BranchFilterRequest filterDto,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<BranchResponse> pageData = branchService.searchBranchesWithPagination(filterDto, pageable);
+        return ApiResponse.success(pageData, "Database search and filtering successful");
     }
 }
