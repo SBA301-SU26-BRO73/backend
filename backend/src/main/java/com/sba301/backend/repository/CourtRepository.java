@@ -1,5 +1,6 @@
 package com.sba301.backend.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -18,4 +19,6 @@ public interface CourtRepository extends JpaRepository<Court, Long> {
 
     boolean existsByBranchIdAndNameIgnoreCaseAndDeletedAtIsNullAndIdNot(
             Long branchId, String name, Long id);
+
+    List<Court> findAllByBranchIdAndDeletedAtIsNull(Long branchId);
 }
