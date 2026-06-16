@@ -22,6 +22,8 @@ public interface TimeSlotTemplateRepository extends JpaRepository<TimeSlotTempla
 
     Page<TimeSlotTemplate> findAllByDeletedAtIsNull(Pageable pageable);
 
+    Page<TimeSlotTemplate> findAllByCourtBranchAdminIdAndDeletedAtIsNull(Long adminId, Pageable pageable);
+
     List<TimeSlotTemplate> findByCourtIdAndDeletedAtIsNull(Long courtId);
 
     boolean existsByCourtIdAndDayOfWeekAndStartTimeAndEndTimeAndDeletedAtIsNull(

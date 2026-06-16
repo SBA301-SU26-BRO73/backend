@@ -19,5 +19,7 @@ public interface BranchRepository extends JpaRepository<Branch, Long>, JpaSpecif
 
     Page<Branch> findAllByStatusAndDeletedAtIsNull(BranchStatus status, Pageable pageable);
 
+    Page<Branch> findAllByAdminIdAndStatusAndDeletedAtIsNull(Long adminId, BranchStatus status, Pageable pageable);
+
     boolean existsByNameAndDeletedAtIsNull(String name);
 }
