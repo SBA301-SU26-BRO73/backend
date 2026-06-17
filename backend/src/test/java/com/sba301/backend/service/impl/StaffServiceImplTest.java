@@ -711,6 +711,8 @@ class StaffServiceImplTest {
                 .build();
 
         TimeSlotTemplate template = new TimeSlotTemplate();
+        template.setStartTime(LocalTime.of(8, 0));
+        template.setEndTime(LocalTime.of(8, 30));
         template.setPrice(new BigDecimal("50000"));
 
         Payment savedPayment = new Payment();
@@ -815,6 +817,7 @@ class StaffServiceImplTest {
     @Test
     void createWalkInBooking_duplicateSlotStarts_throwsBadRequest() {
         WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
                 .courtId(COURT_ID)
                 .guestPhone("0901234567")
                 .slotStarts(List.of(LocalTime.of(8, 0), LocalTime.of(8, 0)))
@@ -826,7 +829,7 @@ class StaffServiceImplTest {
                 .thenReturn(Optional.of(court));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> staffService.createWalkInBooking(STAFF_USER_ID, request));
+                () -> staffService.createWalkInBooking(request));
         assertThat(ex.getMessage()).isEqualTo("Duplicate slot starts in request");
         verify(bookingRepository, never()).save(any(Booking.class));
         verify(paymentRepository, never()).save(any(Payment.class));
@@ -835,6 +838,7 @@ class StaffServiceImplTest {
     @Test
     void createWalkInBooking_nonConsecutiveSlots_throwsBadRequest() {
         WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
                 .courtId(COURT_ID)
                 .guestPhone("0901234567")
                 .slotStarts(List.of(LocalTime.of(8, 0), LocalTime.of(9, 0)))
@@ -852,7 +856,7 @@ class StaffServiceImplTest {
                 .thenReturn(Optional.of(template(LocalTime.of(9, 0), LocalTime.of(9, 30), "50000")));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> staffService.createWalkInBooking(STAFF_USER_ID, request));
+                () -> staffService.createWalkInBooking(request));
         assertEquals("Slots must be consecutive", ex.getMessage());
         verify(paymentRepository, never()).save(any(Payment.class));
         verify(bookingRepository, never()).save(any(Booking.class));
@@ -861,6 +865,7 @@ class StaffServiceImplTest {
     @Test
     void createWalkInBooking_multipleConsecutiveSlots_success() {
         WalkInBookingRequest request = WalkInBookingRequest.builder()
+                .staffUserId(STAFF_USER_ID)
                 .courtId(COURT_ID)
                 .guestPhone("0901234567")
                 .slotStarts(List.of(LocalTime.of(8, 0), LocalTime.of(8, 30)))
@@ -894,7 +899,7 @@ class StaffServiceImplTest {
 
         ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
 
-        WalkInBookingResponse result = staffService.createWalkInBooking(STAFF_USER_ID, request);
+        WalkInBookingResponse result = staffService.createWalkInBooking(request);
 
         assertThat(result).isEqualTo(expected);
         verify(paymentRepository).save(paymentCaptor.capture());

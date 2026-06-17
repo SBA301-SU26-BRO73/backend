@@ -234,6 +234,7 @@ public class StaffServiceImpl implements StaffService {
         }
 
         List<BigDecimal> prices = new ArrayList<>();
+        List<TimeSlotTemplate> templates = new ArrayList<>();
         for (LocalTime slotStart : slotStarts) {
             if (bookingSlotRepository.existsByCourt_IdAndBookingDateAndSlotStart(
                     request.getCourtId(), date, slotStart)) {
@@ -244,6 +245,7 @@ public class StaffServiceImpl implements StaffService {
                             request.getCourtId(), dow, slotStart)
                     .orElseThrow(() -> new BadRequestException("No price configured for slot: " + slotStart));
             prices.add(template.getPrice());
+            templates.add(template);
         }
 
         // A booking must cover consecutive slots: each slot's end == next slot's start.

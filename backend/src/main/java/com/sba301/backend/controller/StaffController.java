@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sba301.backend.config.security.UserDetailsImpl;
 import com.sba301.backend.dto.request.CreateStaffRequest;
 import com.sba301.backend.dto.request.StaffCheckinRequest;
 import com.sba301.backend.dto.request.StaffCheckoutRequest;
@@ -27,13 +30,10 @@ import com.sba301.backend.dto.request.UpdateStaffRequest;
 import com.sba301.backend.dto.request.WalkInBookingRequest;
 import com.sba301.backend.dto.response.ApiResponse;
 import com.sba301.backend.dto.response.StaffResponse;
-import com.sba301.backend.config.security.UserDetailsImpl;
 import com.sba301.backend.service.StaffService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/api/v1")
