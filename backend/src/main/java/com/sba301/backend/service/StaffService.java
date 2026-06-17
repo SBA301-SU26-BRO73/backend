@@ -17,15 +17,15 @@ import com.sba301.backend.dto.response.WalkInBookingResponse;
 
 public interface StaffService {
 
-    StaffResponse create(CreateStaffRequest request);
+    StaffResponse create(Long adminUserId, CreateStaffRequest request);
 
-    StaffResponse getById(Long id);
+    StaffResponse getById(Long adminUserId, Long id);
 
-    Page<StaffResponse> getByBranch(Long branchId, Pageable pageable);
+    Page<StaffResponse> getByBranch(Long adminUserId, Long branchId, Pageable pageable);
 
-    StaffResponse update(Long id, UpdateStaffRequest request);
+    StaffResponse update(Long adminUserId, Long id, UpdateStaffRequest request);
 
-    void delete(Long id);
+    void delete(Long adminUserId, Long id);
 
     List<StaffScheduleResponse> getTodaySchedule(Long staffUserId, LocalDate date);
 

@@ -19,16 +19,32 @@ public class UserDetailsImpl implements UserDetails {
     private final UserStatus status;
     private final Collection<? extends GrantedAuthority> authorities;
 
+    private UserDetailsImpl(Long id, String email, String password, UserStatus status,
+                           Collection<? extends GrantedAuthority> authorities) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.authorities = authorities;
+    }
+
     private UserDetailsImpl(User user) {
-        this.id = user.getId();
-        this.email = user.getEmail();
-        this.password = user.getPasswordHash();
-        this.status = user.getStatus();
-        this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        this(user.getId(), user.getEmail(), user.getPasswordHash(), user.getStatus(),
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
     }
 
     public static UserDetailsImpl from(User user) {
         return new UserDetailsImpl(user);
+    }
+
+    /**
+     * Builds a principal from JWT claims (stateless, no DB lookup). The token is only
+     * issued to authenticated users, so status is assumed ACTIVE; isEnabled() is not
+     * consulted on the token-auth path (the filter sets an already-authenticated token).
+     */
+    public static UserDetailsImpl fromClaims(Long id, String email, String role) {
+        return new UserDetailsImpl(id, email, null, UserStatus.ACTIVE,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
     }
 
     @Override

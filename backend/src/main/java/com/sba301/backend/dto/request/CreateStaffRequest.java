@@ -27,6 +27,9 @@ public class CreateStaffRequest {
     @Pattern(regexp = "^[0-9]{9,11}$", message = "Phone must be 9-11 digits")
     private String phone;
 
+    @Size(max = 150, message = "Full name must not exceed 150 characters")
+    private String fullName;
+
     @NotNull(message = "Branch ID is required")
     private Long branchId;
 }

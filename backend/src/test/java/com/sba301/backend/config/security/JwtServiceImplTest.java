@@ -55,6 +55,13 @@ class JwtServiceImplTest {
     }
 
     @Test
+    void extractUserId_ShouldReturnIdFromClaim() {
+        String token = jwtService.generateAccessToken(testUser);
+
+        assertEquals(1L, jwtService.extractUserId(token));
+    }
+
+    @Test
     void isTokenValid_ValidToken_ShouldReturnTrue() {
         String token = jwtService.generateAccessToken(testUser);
 

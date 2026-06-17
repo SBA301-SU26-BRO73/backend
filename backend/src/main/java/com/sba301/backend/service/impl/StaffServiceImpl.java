@@ -78,12 +78,13 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     @Transactional
-    public StaffResponse create(CreateStaffRequest request) {
+    public StaffResponse create(Long adminUserId, CreateStaffRequest request) {
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
             throw new AppException(ErrorEnum.USER_EMAIL_ALREADY_EXISTS);
         }
 
         Branch branch = getBranch(request.getBranchId());
+        assertOwnsBranch(branch, adminUserId);
 
         User user = new User();
         user.setEmail(request.getEmail());
@@ -91,6 +92,9 @@ public class StaffServiceImpl implements StaffService {
         user.setPhone(request.getPhone());
         user.setRole(UserRole.STAFF);
         user.setStatus(UserStatus.ACTIVE);
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
         userRepository.save(user);
 
         Staff staff = new Staff();
@@ -101,28 +105,40 @@ public class StaffServiceImpl implements StaffService {
     }
 
     @Override
-    public StaffResponse getById(Long id) {
-        return staffMapper.toResponse(getStaff(id));
+    public StaffResponse getById(Long adminUserId, Long id) {
+        Staff staff = getStaff(id);
+        assertOwnsBranch(staff.getBranch(), adminUserId);
+        return staffMapper.toResponse(staff);
     }
 
     @Override
-    public Page<StaffResponse> getByBranch(Long branchId, Pageable pageable) {
-        getBranch(branchId);
+    public Page<StaffResponse> getByBranch(Long adminUserId, Long branchId, Pageable pageable) {
+        Branch branch = getBranch(branchId);
+        assertOwnsBranch(branch, adminUserId);
         return staffRepository.findAllByBranchIdAndDeletedAtIsNull(branchId, pageable)
                 .map(staffMapper::toResponse);
     }
 
     @Override
     @Transactional
-    public StaffResponse update(Long id, UpdateStaffRequest request) {
+    public StaffResponse update(Long adminUserId, Long id, UpdateStaffRequest request) {
         Staff staff = getStaff(id);
+        assertOwnsBranch(staff.getBranch(), adminUserId);
 
         if (request.getBranchId() != null) {
-            staff.setBranch(getBranch(request.getBranchId()));
+            Branch target = getBranch(request.getBranchId());
+            assertOwnsBranch(target, adminUserId);
+            staff.setBranch(target);
         }
 
         if (request.getPhone() != null) {
             staff.getUser().setPhone(request.getPhone());
+        }
+        if (request.getFullName() != null) {
+            staff.getUser().setFullName(request.getFullName());
+        }
+        if (request.getPassword() != null) {
+            staff.getUser().setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
 
         return staffMapper.toResponse(staffRepository.save(staff));
@@ -130,9 +146,10 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long adminUserId, Long id) {
         Staff staff = getStaff(id);
-        OffsetDateTime now = OffsetDateTime.now();
+        assertOwnsBranch(staff.getBranch(), adminUserId);
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         staff.setDeletedAt(now);
         staff.getUser().setStatus(UserStatus.INACTIVE);
         staff.getUser().setDeletedAt(now.toLocalDateTime());
@@ -227,6 +244,16 @@ public class StaffServiceImpl implements StaffService {
                             request.getCourtId(), dow, slotStart)
                     .orElseThrow(() -> new BadRequestException("No price configured for slot: " + slotStart));
             prices.add(template.getPrice());
+        }
+
+        // A booking must cover consecutive slots: each slot's end == next slot's start.
+        List<TimeSlotTemplate> ordered = templates.stream()
+                .sorted(Comparator.comparing(TimeSlotTemplate::getStartTime))
+                .toList();
+        for (int i = 0; i < ordered.size() - 1; i++) {
+            if (!ordered.get(i).getEndTime().equals(ordered.get(i + 1).getStartTime())) {
+                throw new BadRequestException("Slots must be consecutive");
+            }
         }
 
         BigDecimal totalPrice = prices.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -338,5 +365,12 @@ public class StaffServiceImpl implements StaffService {
     private Branch getBranch(Long branchId) {
         return branchRepository.findByIdAndStatusAndDeletedAtIsNull(branchId, BranchStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorEnum.BRANCH_NOT_FOUND));
+    }
+
+    // Admins may only manage staff of branches they own (branches.admin_id).
+    private void assertOwnsBranch(Branch branch, Long adminUserId) {
+        if (!branch.getAdmin().getId().equals(adminUserId)) {
+            throw new AppException(ErrorEnum.ACCESS_DENIED);
+        }
     }
 }

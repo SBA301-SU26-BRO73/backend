@@ -17,6 +17,7 @@ public class StaffResponse {
     private Long id;
     private Long userId;
     private String email;
+    private String fullName;
     private String phone;
     private UserStatus userStatus;
     private Long branchId;
