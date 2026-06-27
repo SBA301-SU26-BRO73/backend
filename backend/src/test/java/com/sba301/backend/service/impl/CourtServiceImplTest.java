@@ -26,19 +26,24 @@ import org.springframework.data.domain.Pageable;
 
 import com.sba301.backend.common.enums.BranchStatus;
 import com.sba301.backend.common.enums.CourtStatus;
+import com.sba301.backend.common.enums.UserRole;
+import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.CreateCourtRequest;
 import com.sba301.backend.dto.request.UpdateCourtRequest;
 import com.sba301.backend.dto.response.CourtResponse;
 import com.sba301.backend.entity.Branch;
 import com.sba301.backend.entity.Court;
 import com.sba301.backend.entity.CourtType;
+import com.sba301.backend.entity.User;
 import com.sba301.backend.exception.BadRequestException;
 import com.sba301.backend.exception.ResourceNotFoundException;
 import com.sba301.backend.mapper.CourtMapper;
 import com.sba301.backend.repository.BranchRepository;
 import com.sba301.backend.repository.CourtRepository;
 import com.sba301.backend.repository.CourtTypeRepository;
+import com.sba301.backend.repository.TimeSlotTemplateRepository;
 import com.sba301.backend.service.CourtPricingService;
+import com.sba301.backend.service.CurrentUserService;
 
 @ExtendWith(MockitoExtension.class)
 class CourtServiceImplTest {
@@ -62,6 +67,12 @@ class CourtServiceImplTest {
     @Mock
     private CourtPricingService courtPricingService;
 
+    @Mock
+    private TimeSlotTemplateRepository timeSlotTemplateRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
+
     @InjectMocks
     private CourtServiceImpl courtService;
 
@@ -70,6 +81,7 @@ class CourtServiceImplTest {
     private CourtType courtType;
     private Court court;
     private CourtResponse courtResponse;
+    private User admin;
 
     @BeforeEach
     void setUp() {
@@ -84,6 +96,11 @@ class CourtServiceImplTest {
         branch = new Branch();
         branch.setId(BRANCH_ID);
         branch.setName("Branch 1");
+
+        admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.SUPER_ADMIN);
+        branch.setAdmin(admin);
 
         courtType = new CourtType();
         courtType.setId(COURT_TYPE_ID);
@@ -107,6 +124,9 @@ class CourtServiceImplTest {
                 .courtTypeName(courtType.getName())
                 .status(CourtStatus.ACTIVE)
                 .build();
+
+        org.mockito.Mockito.lenient().when(currentUserService.getCurrentUser()).thenReturn(admin);
+        org.mockito.Mockito.lenient().when(currentUserService.isSuperAdmin(admin)).thenReturn(true);
     }
 
     @Test
@@ -218,6 +238,36 @@ class CourtServiceImplTest {
         assertEquals(1, result.getNumber());
         assertSame(courtResponse, result.getContent().getFirst());
         verify(courtRepository).findAllByDeletedAtIsNull(pageable);
+    }
+
+    @Test
+    void getAllAsAdminReturnsOnlyCourtsInOwnedBranches() {
+        admin.setRole(UserRole.ADMIN);
+        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Court> courtPage = new PageImpl<>(List.of(court), pageable, 1);
+        when(courtRepository.findAllByBranchAdminIdAndDeletedAtIsNull(1L, pageable)).thenReturn(courtPage);
+        when(courtMapper.toResponse(court)).thenReturn(courtResponse);
+
+        Page<CourtResponse> result = courtService.getAll(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(courtRepository).findAllByBranchAdminIdAndDeletedAtIsNull(1L, pageable);
+        verify(courtRepository, never()).findAllByDeletedAtIsNull(pageable);
+    }
+
+    @Test
+    void getByIdAsAdminRejectsCourtInOtherAdminBranch() {
+        admin.setRole(UserRole.ADMIN);
+        User otherAdmin = new User();
+        otherAdmin.setId(2L);
+        branch.setAdmin(otherAdmin);
+        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
+        when(courtRepository.findByIdAndDeletedAtIsNull(COURT_ID)).thenReturn(Optional.of(court));
+
+        AppException exception = assertThrows(AppException.class, () -> courtService.getById(COURT_ID));
+
+        assertEquals(com.sba301.backend.common.enums.ErrorEnum.ACCESS_DENIED, exception.getErrorEnum());
     }
 
     @Test

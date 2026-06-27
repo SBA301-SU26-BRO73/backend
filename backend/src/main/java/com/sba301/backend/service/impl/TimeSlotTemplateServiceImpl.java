@@ -18,13 +18,18 @@ import com.sba301.backend.dto.request.CreateTimeSlotTemplateRequest;
 import com.sba301.backend.dto.request.UpdateTimeSlotTemplateRequest;
 import com.sba301.backend.dto.response.ApplyTimeSlotTemplateResponse;
 import com.sba301.backend.dto.response.TimeSlotTemplateResponse;
+import com.sba301.backend.common.enums.ErrorEnum;
+import com.sba301.backend.config.exception.AppException;
+import com.sba301.backend.entity.Branch;
 import com.sba301.backend.entity.Court;
 import com.sba301.backend.entity.TimeSlotTemplate;
+import com.sba301.backend.entity.User;
 import com.sba301.backend.exception.BadRequestException;
 import com.sba301.backend.exception.ResourceNotFoundException;
 import com.sba301.backend.mapper.TimeSlotTemplateMapper;
 import com.sba301.backend.repository.CourtRepository;
 import com.sba301.backend.repository.TimeSlotTemplateRepository;
+import com.sba301.backend.service.CurrentUserService;
 import com.sba301.backend.service.TimeSlotTemplateService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +42,7 @@ public class TimeSlotTemplateServiceImpl implements TimeSlotTemplateService {
     private final TimeSlotTemplateRepository timeSlotTemplateRepository;
     private final CourtRepository courtRepository;
     private final TimeSlotTemplateMapper timeSlotTemplateMapper;
+    private final CurrentUserService currentUserService;
 
     @Override
     @Transactional
@@ -59,7 +65,13 @@ public class TimeSlotTemplateServiceImpl implements TimeSlotTemplateService {
 
     @Override
     public Page<TimeSlotTemplateResponse> getAll(Pageable pageable) {
-        return timeSlotTemplateRepository.findAllByDeletedAtIsNull(pageable)
+        User currentUser = currentUserService.getCurrentUser();
+        Page<TimeSlotTemplate> templates = currentUserService.isSuperAdmin(currentUser)
+                ? timeSlotTemplateRepository.findAllByDeletedAtIsNull(pageable)
+                : timeSlotTemplateRepository.findAllByCourtBranchAdminIdAndDeletedAtIsNull(
+                        currentUser.getId(), pageable);
+
+        return templates
                 .map(timeSlotTemplateMapper::toResponse);
     }
 
@@ -145,14 +157,26 @@ public class TimeSlotTemplateServiceImpl implements TimeSlotTemplateService {
     }
 
     private Court getCourt(Long id) {
-        return courtRepository.findByIdAndDeletedAtIsNull(id)
+        Court court = courtRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Court not found with id: " + id));
+        assertBranchAccess(court.getBranch());
+        return court;
     }
 
     private TimeSlotTemplate getTemplate(Long id) {
-        return timeSlotTemplateRepository.findByIdAndDeletedAtIsNull(id)
+        TimeSlotTemplate template = timeSlotTemplateRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Time slot template not found with id: " + id));
+        assertBranchAccess(template.getCourt().getBranch());
+        return template;
+    }
+
+    private void assertBranchAccess(Branch branch) {
+        User currentUser = currentUserService.getCurrentUser();
+        if (!currentUserService.isSuperAdmin(currentUser)
+                && !branch.getAdmin().getId().equals(currentUser.getId())) {
+            throw new AppException(ErrorEnum.ACCESS_DENIED);
+        }
     }
 
     private void validateTemplateValues(
