@@ -1,5 +1,10 @@
 package com.sba301.backend.repository;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +20,7 @@ import com.sba301.backend.entity.Booking;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+    List<Booking> findAllByIdIn(Collection<Long> ids);
     @Query("""
             select b from Booking b
             join fetch b.court c
