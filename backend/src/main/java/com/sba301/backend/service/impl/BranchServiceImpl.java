@@ -22,6 +22,7 @@ import com.sba301.backend.mapper.BranchMapper;
 import com.sba301.backend.repository.BranchRepository;
 import com.sba301.backend.repository.UserRepository;
 import com.sba301.backend.service.BranchService;
+import com.sba301.backend.service.CurrentUserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,12 +34,13 @@ public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
     private final UserRepository userRepository;
     private final BranchMapper branchMapper;
+    private final CurrentUserService currentUserService;
 
     @Override
     @Transactional
     public BranchResponse create(CreateBranchRequest request) {
         validateUniqueName(request.getName());
-        User admin = getAdmin(request.getAdminId());
+        User admin = resolveRequestedAdmin(request.getAdminId());
 
         Branch branch = branchMapper.toEntity(request);
         branch.setAdmin(admin);
@@ -48,25 +50,31 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public BranchResponse getById(Long id) {
-        return branchMapper.toResponse(getBranch(id));
+        return branchMapper.toResponse(getAccessibleBranch(id));
     }
 
     @Override
     public Page<BranchResponse> getAll(Pageable pageable) {
-        return branchRepository.findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable)
+        User currentUser = currentUserService.getCurrentUser();
+        Page<Branch> branches = currentUserService.isSuperAdmin(currentUser)
+                ? branchRepository.findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable)
+                : branchRepository.findAllByAdminIdAndStatusAndDeletedAtIsNull(
+                        currentUser.getId(), BranchStatus.ACTIVE, pageable);
+
+        return branches
                 .map(branchMapper::toResponse);
     }
 
     @Override
     @Transactional
     public BranchResponse update(Long id, UpdateBranchRequest request) {
-        Branch branch = getBranch(id);
+        Branch branch = getAccessibleBranch(id);
 
         if (!branch.getName().equals(request.getName())) {
             validateUniqueName(request.getName());
         }
 
-        User admin = getAdmin(request.getAdminId());
+        User admin = resolveRequestedAdmin(request.getAdminId());
         branch.setAdmin(admin);
         branchMapper.updateEntity(branch, request);
 
@@ -76,7 +84,7 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public void delete(Long id) {
-        Branch branch = getBranch(id);
+        Branch branch = getAccessibleBranch(id);
         branch.setStatus(BranchStatus.INACTIVE);
         branch.setDeletedAt(OffsetDateTime.now());
         branchRepository.save(branch);
@@ -92,6 +100,27 @@ public class BranchServiceImpl implements BranchService {
                 .orElseThrow(() -> new AppException(ErrorEnum.ADMIN_NOT_FOUND));
     }
 
+    private Branch getAccessibleBranch(Long id) {
+        Branch branch = getBranch(id);
+        User currentUser = currentUserService.getCurrentUser();
+        if (!currentUserService.isSuperAdmin(currentUser)
+                && !branch.getAdmin().getId().equals(currentUser.getId())) {
+            throw new AppException(ErrorEnum.ACCESS_DENIED);
+        }
+        return branch;
+    }
+
+    private User resolveRequestedAdmin(Long requestedAdminId) {
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUserService.isSuperAdmin(currentUser)) {
+            return getAdmin(requestedAdminId);
+        }
+        if (!currentUser.getId().equals(requestedAdminId)) {
+            throw new AppException(ErrorEnum.ACCESS_DENIED);
+        }
+        return currentUser;
+    }
+
     private void validateUniqueName(String name) {
         if (branchRepository.existsByNameAndDeletedAtIsNull(name)) {
             throw new AppException(ErrorEnum.BRANCH_NAME_ALREADY_EXISTS);
@@ -100,7 +129,9 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public Page<BranchResponse> searchBranchesWithPagination(BranchFilterRequest filterDto, Pageable pageable) {
-        Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto);
+        User currentUser = currentUserService.getCurrentUser();
+        Long adminId = currentUserService.isSuperAdmin(currentUser) ? null : currentUser.getId();
+        Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto, adminId);
         Page<Branch> branchPage = branchRepository.findAll(spec, pageable);
         return branchPage.map(branchMapper::toResponse);
     }

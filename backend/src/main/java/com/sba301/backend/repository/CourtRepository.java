@@ -15,6 +15,8 @@ public interface CourtRepository extends JpaRepository<Court, Long> {
 
     Page<Court> findAllByDeletedAtIsNull(Pageable pageable);
 
+    Page<Court> findAllByBranchAdminIdAndDeletedAtIsNull(Long adminId, Pageable pageable);
+
     boolean existsByBranchIdAndNameIgnoreCaseAndDeletedAtIsNull(Long branchId, String name);
 
     boolean existsByBranchIdAndNameIgnoreCaseAndDeletedAtIsNullAndIdNot(

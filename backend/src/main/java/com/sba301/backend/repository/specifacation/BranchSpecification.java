@@ -17,11 +17,18 @@ import java.util.List;
 public class BranchSpecification {
 
     public static Specification<Branch> filterByCriteria(BranchFilterRequest filter) {
+        return filterByCriteria(filter, null);
+    }
+
+    public static Specification<Branch> filterByCriteria(BranchFilterRequest filter, Long adminId) {
         return (root, query, cb) -> {
 
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.isNull(root.get("deletedAt")));
+            if (adminId != null) {
+                predicates.add(cb.equal(root.get("admin").get("id"), adminId));
+            }
 
             if (filter == null) {
                 return cb.and(predicates.toArray(new Predicate[0]));
