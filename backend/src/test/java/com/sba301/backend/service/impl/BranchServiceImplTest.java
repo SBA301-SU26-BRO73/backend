@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.sba301.backend.common.enums.BranchStatus;
 import com.sba301.backend.common.enums.ErrorEnum;
+import com.sba301.backend.common.enums.UserRole;
 import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.CreateBranchRequest;
 import com.sba301.backend.dto.request.UpdateBranchRequest;
@@ -33,6 +34,7 @@ import com.sba301.backend.entity.User;
 import com.sba301.backend.mapper.BranchMapper;
 import com.sba301.backend.repository.BranchRepository;
 import com.sba301.backend.repository.UserRepository;
+import com.sba301.backend.service.CurrentUserService;
 
 import java.time.LocalTime;
 
@@ -47,6 +49,9 @@ class BranchServiceImplTest {
 
     @Mock
     private BranchMapper branchMapper;
+
+    @Mock
+    private CurrentUserService currentUserService;
 
     @InjectMocks
     private BranchServiceImpl branchService;
@@ -100,6 +105,11 @@ class BranchServiceImplTest {
         admin = new User();
         admin.setId(1L);
         admin.setEmail("admin@example.com");
+        admin.setRole(UserRole.SUPER_ADMIN);
+        branch.setAdmin(admin);
+
+        org.mockito.Mockito.lenient().when(currentUserService.getCurrentUser()).thenReturn(admin);
+        org.mockito.Mockito.lenient().when(currentUserService.isSuperAdmin(admin)).thenReturn(true);
 
         // Setup BranchResponse
         branchResponse = new BranchResponse();
@@ -185,6 +195,38 @@ class BranchServiceImplTest {
         assertEquals(1, result.getTotalElements());
         assertEquals(branchResponse.getId(), result.getContent().get(0).getId());
         verify(branchRepository).findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable);
+    }
+
+    @Test
+    void getAllAsAdminReturnsOnlyOwnedBranches() {
+        admin.setRole(UserRole.ADMIN);
+        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Branch> branchPage = new PageImpl<>(java.util.List.of(branch));
+        when(branchRepository.findAllByAdminIdAndStatusAndDeletedAtIsNull(1L, BranchStatus.ACTIVE, pageable))
+                .thenReturn(branchPage);
+        when(branchMapper.toResponse(branch)).thenReturn(branchResponse);
+
+        Page<BranchResponse> result = branchService.getAll(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(branchRepository).findAllByAdminIdAndStatusAndDeletedAtIsNull(1L, BranchStatus.ACTIVE, pageable);
+        verify(branchRepository, never()).findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable);
+    }
+
+    @Test
+    void getByIdAsAdminRejectsOtherAdminBranch() {
+        admin.setRole(UserRole.ADMIN);
+        User otherAdmin = new User();
+        otherAdmin.setId(2L);
+        branch.setAdmin(otherAdmin);
+        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
+        when(branchRepository.findByIdAndStatusAndDeletedAtIsNull(1L, BranchStatus.ACTIVE))
+                .thenReturn(Optional.of(branch));
+
+        AppException exception = assertThrows(AppException.class, () -> branchService.getById(1L));
+
+        assertEquals(ErrorEnum.ACCESS_DENIED, exception.getErrorEnum());
     }
 
     @Test
@@ -275,4 +317,5 @@ class BranchServiceImplTest {
         assertEquals(ErrorEnum.BRANCH_NOT_FOUND, exception.getErrorEnum());
         verify(branchRepository, never()).save(any(Branch.class));
     }
+
 }

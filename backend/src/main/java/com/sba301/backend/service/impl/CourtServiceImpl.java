@@ -1,7 +1,14 @@
 package com.sba301.backend.service.impl;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 
+import com.sba301.backend.common.enums.ErrorEnum;
+import com.sba301.backend.config.exception.AppException;
+import com.sba301.backend.dto.response.DailySlotResponse;
+import com.sba301.backend.repository.TimeSlotTemplateRepository;
+import com.sba301.backend.repository.projection.DailySlotProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,8 +28,10 @@ import com.sba301.backend.mapper.CourtMapper;
 import com.sba301.backend.repository.BranchRepository;
 import com.sba301.backend.repository.CourtRepository;
 import com.sba301.backend.repository.CourtTypeRepository;
+import com.sba301.backend.entity.User;
 import com.sba301.backend.service.CourtPricingService;
 import com.sba301.backend.service.CourtService;
+import com.sba301.backend.service.CurrentUserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,7 +45,8 @@ public class CourtServiceImpl implements CourtService {
     private final BranchRepository branchRepository;
     private final CourtMapper courtMapper;
     private final CourtPricingService courtPricingService;
-
+    private final TimeSlotTemplateRepository timeSlotTemplateRepository;
+    private final CurrentUserService currentUserService;
     @Override
     @Transactional
     public CourtResponse create(CreateCourtRequest request) {
@@ -63,7 +73,12 @@ public class CourtServiceImpl implements CourtService {
 
     @Override
     public Page<CourtResponse> getAll(Pageable pageable) {
-        return courtRepository.findAllByDeletedAtIsNull(pageable)
+        User currentUser = currentUserService.getCurrentUser();
+        Page<Court> courts = currentUserService.isSuperAdmin(currentUser)
+                ? courtRepository.findAllByDeletedAtIsNull(pageable)
+                : courtRepository.findAllByBranchAdminIdAndDeletedAtIsNull(currentUser.getId(), pageable);
+
+        return courts
                 .map(courtMapper::toResponse);
     }
 
@@ -110,13 +125,17 @@ public class CourtServiceImpl implements CourtService {
     }
 
     private Court getCourt(Long id) {
-        return courtRepository.findByIdAndDeletedAtIsNull(id)
+        Court court = courtRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Court not found with id: " + id));
+        assertBranchAccess(court.getBranch());
+        return court;
     }
 
     private Branch getBranch(Long id) {
-        return branchRepository.findByIdAndStatusAndDeletedAtIsNull(id, BranchStatus.ACTIVE)
+        Branch branch = branchRepository.findByIdAndStatusAndDeletedAtIsNull(id, BranchStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + id));
+        assertBranchAccess(branch);
+        return branch;
     }
 
     private CourtType getCourtType(Long id) {
@@ -134,6 +153,34 @@ public class CourtServiceImpl implements CourtService {
         if (courtRepository.existsByBranchIdAndNameIgnoreCaseAndDeletedAtIsNullAndIdNot(
                 branchId, name, courtId)) {
             throw new BadRequestException("Court name already exists in this branch");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailySlotResponse> getDailyCourtSchedule(Long courtId, LocalDate date) {
+        getCourt(courtId);
+        return timeSlotTemplateRepository
+                .getDailyCourtSchedule(courtId, date)
+                .stream()
+                .map(courtMapper::toDailySlotResponse)
+                .toList();
+    }
+
+    @Override
+    public List<CourtResponse> getCourtsByBranch(Long branchId) {
+        getBranch(branchId);
+        return courtRepository.findAllByBranchIdAndDeletedAtIsNull(branchId)
+                .stream()
+                .map(courtMapper::toResponse)
+                .toList();
+    }
+
+    private void assertBranchAccess(Branch branch) {
+        User currentUser = currentUserService.getCurrentUser();
+        if (!currentUserService.isSuperAdmin(currentUser)
+                && !branch.getAdmin().getId().equals(currentUser.getId())) {
+            throw new AppException(ErrorEnum.ACCESS_DENIED);
         }
     }
 }

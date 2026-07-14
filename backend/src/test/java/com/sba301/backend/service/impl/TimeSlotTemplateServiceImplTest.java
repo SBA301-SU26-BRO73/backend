@@ -29,18 +29,24 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import com.sba301.backend.common.enums.ErrorEnum;
+import com.sba301.backend.common.enums.UserRole;
+import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.ApplyTimeSlotTemplateRequest;
 import com.sba301.backend.dto.request.CreateTimeSlotTemplateRequest;
 import com.sba301.backend.dto.request.UpdateTimeSlotTemplateRequest;
 import com.sba301.backend.dto.response.ApplyTimeSlotTemplateResponse;
 import com.sba301.backend.dto.response.TimeSlotTemplateResponse;
+import com.sba301.backend.entity.Branch;
 import com.sba301.backend.entity.Court;
 import com.sba301.backend.entity.TimeSlotTemplate;
+import com.sba301.backend.entity.User;
 import com.sba301.backend.exception.BadRequestException;
 import com.sba301.backend.exception.ResourceNotFoundException;
 import com.sba301.backend.mapper.TimeSlotTemplateMapper;
 import com.sba301.backend.repository.CourtRepository;
 import com.sba301.backend.repository.TimeSlotTemplateRepository;
+import com.sba301.backend.service.CurrentUserService;
 
 @ExtendWith(MockitoExtension.class)
 class TimeSlotTemplateServiceImplTest {
@@ -54,13 +60,22 @@ class TimeSlotTemplateServiceImplTest {
     @Mock
     private CourtRepository courtRepository;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
     private TimeSlotTemplateServiceImpl service;
     private Court court;
+    private User admin;
 
     @BeforeEach
     void setUp() {
         service = new TimeSlotTemplateServiceImpl(
-                timeSlotTemplateRepository, courtRepository, new TimeSlotTemplateMapper());
+                timeSlotTemplateRepository, courtRepository, new TimeSlotTemplateMapper(), currentUserService);
+        admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.SUPER_ADMIN);
+        org.mockito.Mockito.lenient().when(currentUserService.getCurrentUser()).thenReturn(admin);
+        org.mockito.Mockito.lenient().when(currentUserService.isSuperAdmin(admin)).thenReturn(true);
         court = court(COURT_ID, "Court A");
     }
 
@@ -171,6 +186,39 @@ class TimeSlotTemplateServiceImplTest {
 
         assertEquals(1, result.getTotalElements());
         assertEquals(TEMPLATE_ID, result.getContent().getFirst().getId());
+    }
+
+    @Test
+    void getAllAsAdminReturnsOnlyTemplatesInOwnedBranches() {
+        admin.setRole(UserRole.ADMIN);
+        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
+        PageRequest pageable = PageRequest.of(0, 10);
+        TimeSlotTemplate template = template(court, (short) 1, 6, 7);
+        template.setId(TEMPLATE_ID);
+        when(timeSlotTemplateRepository.findAllByCourtBranchAdminIdAndDeletedAtIsNull(1L, pageable))
+                .thenReturn(new PageImpl<>(List.of(template), pageable, 1));
+
+        Page<TimeSlotTemplateResponse> result = service.getAll(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(timeSlotTemplateRepository).findAllByCourtBranchAdminIdAndDeletedAtIsNull(1L, pageable);
+        verify(timeSlotTemplateRepository, never()).findAllByDeletedAtIsNull(pageable);
+    }
+
+    @Test
+    void getByIdAsAdminRejectsTemplateInOtherAdminBranch() {
+        admin.setRole(UserRole.ADMIN);
+        User otherAdmin = new User();
+        otherAdmin.setId(2L);
+        court.getBranch().setAdmin(otherAdmin);
+        TimeSlotTemplate template = existingTemplate();
+        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
+        when(timeSlotTemplateRepository.findByIdAndDeletedAtIsNull(TEMPLATE_ID))
+                .thenReturn(Optional.of(template));
+
+        AppException exception = assertThrows(AppException.class, () -> service.getById(TEMPLATE_ID));
+
+        assertEquals(ErrorEnum.ACCESS_DENIED, exception.getErrorEnum());
     }
 
     @Test
@@ -417,6 +465,10 @@ class TimeSlotTemplateServiceImplTest {
         Court value = new Court();
         value.setId(id);
         value.setName(name);
+        Branch branch = new Branch();
+        branch.setId(id);
+        branch.setAdmin(admin);
+        value.setBranch(branch);
         return value;
     }
 

@@ -60,6 +60,15 @@ public class Booking {
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
+    @Column(name = "checkin_code", length = 36, unique = true)
+    private String checkinCode;
+
+    @Column(name = "checked_in_at")
+    private OffsetDateTime checkedInAt;
+
+    @Column(name = "completed_at")
+    private OffsetDateTime completedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
