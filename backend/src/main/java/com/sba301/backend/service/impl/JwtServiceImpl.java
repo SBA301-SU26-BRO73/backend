@@ -52,6 +52,13 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    public Long extractUserId(String token) {
+        // u_id is serialized as a JSON number; read as Number to tolerate Integer/Long.
+        Number userId = parseClaims(token).get(CLAIM_USER_ID, Number.class);
+        return userId == null ? null : userId.longValue();
+    }
+
+    @Override
     public String extractTokenType(String token) {
         return parseClaims(token).get(CLAIM_TOKEN_TYPE, String.class);
     }

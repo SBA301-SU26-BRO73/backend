@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sba301.backend.config.security.UserDetailsImpl;
 import com.sba301.backend.dto.request.CreateStaffRequest;
 import com.sba301.backend.dto.request.StaffCheckinRequest;
 import com.sba301.backend.dto.request.StaffCheckoutRequest;
@@ -41,29 +44,44 @@ public class StaffController {
     private final StaffService staffService;
 
     @PostMapping("/staff")
-    public ResponseEntity<ApiResponse<StaffResponse>> create(@Valid @RequestBody CreateStaffRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<StaffResponse>> create(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @Valid @RequestBody CreateStaffRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(staffService.create(request), "Staff created successfully", 201));
+                .body(ApiResponse.success(staffService.create(principal.getId(), request), "Staff created successfully", 201));
     }
 
     @GetMapping("/branches/{branchId}/staff")
-    public ResponseEntity<ApiResponse<Page<StaffResponse>>> getByBranch(@PathVariable Long branchId, Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.getByBranch(branchId, pageable)));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<StaffResponse>>> getByBranch(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Long branchId, Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(staffService.getByBranch(principal.getId(), branchId, pageable)));
     }
 
     @GetMapping("/staff/{id}")
-    public ResponseEntity<ApiResponse<StaffResponse>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.getById(id)));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<StaffResponse>> getById(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(staffService.getById(principal.getId(), id)));
     }
 
     @PatchMapping("/staff/{id}")
-    public ResponseEntity<ApiResponse<StaffResponse>> update(@PathVariable Long id, @Valid @RequestBody UpdateStaffRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.update(id, request), "Staff updated successfully"));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<StaffResponse>> update(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Long id, @Valid @RequestBody UpdateStaffRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(staffService.update(principal.getId(), id, request), "Staff updated successfully"));
     }
 
     @DeleteMapping("/staff/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        staffService.delete(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Long id) {
+        staffService.delete(principal.getId(), id);
         return ResponseEntity.noContent().build();
     }
 

@@ -13,6 +13,7 @@ public class StaffMapper {
                 .id(staff.getId())
                 .userId(staff.getUser().getId())
                 .email(staff.getUser().getEmail())
+                .fullName(staff.getUser().getFullName())
                 .phone(staff.getUser().getPhone())
                 .userStatus(staff.getUser().getStatus())
                 .branchId(staff.getBranch().getId())

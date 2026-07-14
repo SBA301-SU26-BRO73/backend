@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.sba301.backend.service.JwtService;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -39,9 +37,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtService.isTokenValid(token) && ACCESS_TOKEN.equals(jwtService.extractTokenType(token))) {
             String email = jwtService.extractEmail(token);
             String role = jwtService.extractRole(token);
+            Long userId = jwtService.extractUserId(token);
 
+            // Principal must be a UserDetailsImpl so controllers can resolve it via
+            // @AuthenticationPrincipal. getUsername() stays the email and the authority
+            // stays ROLE_<role>, so getName()/@PreAuthorize behaviour is unchanged.
+            UserDetailsImpl principal = UserDetailsImpl.fromClaims(userId, email, role);
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    email, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                    principal, null, principal.getAuthorities());
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
