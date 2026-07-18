@@ -109,6 +109,7 @@ class BranchServiceImplTest {
         branch.setAdmin(admin);
 
         org.mockito.Mockito.lenient().when(currentUserService.getCurrentUser()).thenReturn(admin);
+        org.mockito.Mockito.lenient().when(currentUserService.getCurrentUserOptional()).thenReturn(Optional.of(admin));
         org.mockito.Mockito.lenient().when(currentUserService.isSuperAdmin(admin)).thenReturn(true);
 
         // Setup BranchResponse
@@ -215,18 +216,19 @@ class BranchServiceImplTest {
     }
 
     @Test
-    void getByIdAsAdminRejectsOtherAdminBranch() {
+    void getByIdAsAdminAllowsOtherAdminBranch() {
         admin.setRole(UserRole.ADMIN);
         User otherAdmin = new User();
         otherAdmin.setId(2L);
         branch.setAdmin(otherAdmin);
-        when(currentUserService.isSuperAdmin(admin)).thenReturn(false);
         when(branchRepository.findByIdAndStatusAndDeletedAtIsNull(1L, BranchStatus.ACTIVE))
                 .thenReturn(Optional.of(branch));
+        when(branchMapper.toResponse(branch)).thenReturn(branchResponse);
 
-        AppException exception = assertThrows(AppException.class, () -> branchService.getById(1L));
+        BranchResponse result = branchService.getById(1L);
 
-        assertEquals(ErrorEnum.ACCESS_DENIED, exception.getErrorEnum());
+        assertNotNull(result);
+        assertEquals(branchResponse.getId(), result.getId());
     }
 
     @Test

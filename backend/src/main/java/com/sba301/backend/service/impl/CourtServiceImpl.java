@@ -159,7 +159,8 @@ public class CourtServiceImpl implements CourtService {
     @Override
     @Transactional(readOnly = true)
     public List<DailySlotResponse> getDailyCourtSchedule(Long courtId, LocalDate date) {
-        getCourt(courtId);
+        courtRepository.findByIdAndDeletedAtIsNull(courtId)
+                .orElseThrow(() -> new ResourceNotFoundException("Court not found with id: " + courtId));
         return timeSlotTemplateRepository
                 .getDailyCourtSchedule(courtId, date)
                 .stream()
@@ -169,7 +170,8 @@ public class CourtServiceImpl implements CourtService {
 
     @Override
     public List<CourtResponse> getCourtsByBranch(Long branchId) {
-        getBranch(branchId);
+        branchRepository.findByIdAndStatusAndDeletedAtIsNull(branchId, BranchStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + branchId));
         return courtRepository.findAllByBranchIdAndDeletedAtIsNull(branchId)
                 .stream()
                 .map(courtMapper::toResponse)
