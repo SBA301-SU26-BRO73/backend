@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sba301.backend.common.enums.BranchStatus;
+import com.sba301.backend.common.enums.UserRole;
 import com.sba301.backend.common.enums.ErrorEnum;
 import com.sba301.backend.config.exception.AppException;
 import com.sba301.backend.dto.request.CreateBranchRequest;
@@ -50,16 +51,23 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public BranchResponse getById(Long id) {
-        return branchMapper.toResponse(getAccessibleBranch(id));
+        return branchMapper.toResponse(getBranch(id));
     }
 
     @Override
     public Page<BranchResponse> getAll(Pageable pageable) {
-        User currentUser = currentUserService.getCurrentUser();
-        Page<Branch> branches = currentUserService.isSuperAdmin(currentUser)
-                ? branchRepository.findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable)
-                : branchRepository.findAllByAdminIdAndStatusAndDeletedAtIsNull(
-                        currentUser.getId(), BranchStatus.ACTIVE, pageable);
+        User currentUser = currentUserService.getCurrentUserOptional().orElse(null);
+        Page<Branch> branches;
+        if (currentUser == null) {
+            branches = branchRepository.findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable);
+        } else if (currentUserService.isSuperAdmin(currentUser)) {
+            branches = branchRepository.findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable);
+        } else if (currentUser.getRole() == UserRole.ADMIN) {
+            branches = branchRepository.findAllByAdminIdAndStatusAndDeletedAtIsNull(
+                    currentUser.getId(), BranchStatus.ACTIVE, pageable);
+        } else {
+            branches = branchRepository.findAllByStatusAndDeletedAtIsNull(BranchStatus.ACTIVE, pageable);
+        }
 
         return branches
                 .map(branchMapper::toResponse);
@@ -129,8 +137,11 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public Page<BranchResponse> searchBranchesWithPagination(BranchFilterRequest filterDto, Pageable pageable) {
-        User currentUser = currentUserService.getCurrentUser();
-        Long adminId = currentUserService.isSuperAdmin(currentUser) ? null : currentUser.getId();
+        User currentUser = currentUserService.getCurrentUserOptional().orElse(null);
+        Long adminId = null;
+        if (currentUser != null && currentUser.getRole() == UserRole.ADMIN) {
+            adminId = currentUser.getId();
+        }
         Specification<Branch> spec = BranchSpecification.filterByCriteria(filterDto, adminId);
         Page<Branch> branchPage = branchRepository.findAll(spec, pageable);
         return branchPage.map(branchMapper::toResponse);

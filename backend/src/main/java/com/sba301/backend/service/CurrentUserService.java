@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class CurrentUserService {
@@ -35,6 +37,21 @@ public class CurrentUserService {
             throw new AppException(ErrorEnum.ACCOUNT_INACTIVE);
         }
         return user;
+    }
+
+    public Optional<User> getCurrentUserOptional() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+
+        String email = extractEmail(authentication.getPrincipal());
+        if (email == null) {
+            return Optional.empty();
+        }
+
+        return userRepository.findActiveByEmail(email)
+                .filter(user -> user.getStatus() == UserStatus.ACTIVE);
     }
 
     public boolean isSuperAdmin(User user) {
